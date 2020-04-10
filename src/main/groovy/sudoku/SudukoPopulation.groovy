@@ -13,26 +13,28 @@ class SudukoPopulation extends DataClass{
   List<List<Integer>> preBoard = []
   List<List<Boolean>> fixed = []
 
-
   int numberOfGenes       //length of an individual's chromosome
   int populationPerNode   // must be greater than 3
   int nodes
   List <Long> seeds = null
   boolean maximise = true             // implies looking for a maximum valued goal
+  Double crossoverProbability = null   // probability of a crossover operation 0.0 ..< 1.0
   Double mutationProbability = null   // probability a child will be mutated 0.0 .. 1.0
   String fileName = ""                // some problems will need file input to create individuals
   static String processFile = "processFile"      // used to read the individual creation
   // may require the addition of further data fields in the population
   // unless otherwise stated these methods return completedOK unless otherwise indicated
-  static String initialiseMethod = "initialise"   // used to initialise the number of generated instances
-  static String createInstance = "create"         // creates each instance object but not the individuals
-                                                  // returns normalCompletion or normalTermination
-  static String sortMethod = "quickSort"          // sorts population into ascending order called in Root
-  static String convergence = "convergence"       // determines if there is convergence to a solution
-                                                  // returns a boolean true if converged false otherwise
-                                                  // called in Root process
-  static String crossover = "crossover"           // used to undertake the crossover operation
-                                                  // called from a Node process
+  static String initialiseMethod = "initialise"     // used to initialise the number of generated instances
+  static String createInstance = "create"           // creates each instance object but not the individuals
+                                                    // returns normalCompletion or normalTermination
+  static String sortMethod = "quickSort"            // sorts population into ascending order called in Root
+  static String convergence = "convergence"         // determines if there is convergence to a solution
+                                                    // returns a boolean true if converged false otherwise
+                                                    // called in Root process
+  static String crossover = "crossover"             // used to undertake the crossover operation
+                                                    // called from a Node process
+  static String combineChildren = "combineChildren" // called after crossover and mutation
+                                                    // to combine one or both children into population
 
   int first, last             // index of first and last entry in population, depends on maximise
   int lastIndex               // subscript of last entry in population,regardless
@@ -56,12 +58,16 @@ class SudukoPopulation extends DataClass{
       populationPerNode = (int)d[1]
       nodes = (int)d[2]
       maximise = (boolean)d[3]
-      mutationProbability = (double)d[4]
-      if (seeds != null) {
-        seeds = []
-        d[5].each { seeds << (it as Long) }
-      }
-      fileName = d[6]
+      crossoverProbability = (double)d[4]
+      mutationProbability = (double)d[5]
+      seeds = []
+      if (d[6] != null)
+        d[6].each { seeds << (it as Long) }
+      else
+      // seeds will be generated in the node
+        for ( i in 0 ..< nodes) seeds << null
+
+      fileName = d[7]
 
       assert populationPerNode >= 3: "Population: populationPerNode must be 3 or more not $populationPerNode"
       assert nodes >= 1: "Population: nodes ($nodes) must be >= 1"
@@ -145,43 +151,33 @@ class SudukoPopulation extends DataClass{
   // assuming ONE crossover point splitting an individual into before and after the point
   // population[child1] = population[best].before plus population[secondBest]after
   // population[child2] = population[secondBest].before plus population[best]after
-  // a mutation is undertaken on both children provided a randomly generated value is less than
-  // mutateProbability
-  // the fitness of the two children are then evaluated
-  // whichever child has the best fitness is then swapped with population[worst]
   int crossover(int best,
                 int secondBest,
                 int worst,
                 int child1,
                 int child2,
-                double mutateProbability,
-                Random rng){
-//    println "Crossover for $worst"
+                Random rng) {
     int xOverPoint = rng.nextInt(numberOfGenes)
-    population[child1].prePoint(population[best], xOverPoint )
-    population[child2].prePoint(population[secondBest], xOverPoint )
-    population[child2].postPoint(population[best], xOverPoint )
-    population[child1].postPoint(population[secondBest], xOverPoint )
-
-    // now see if we do a mutation
-    if ( rng.nextDouble() < mutateProbability) population[child1].mutate(rng)
-    if ( rng.nextDouble() < mutateProbability) population[child2].mutate(rng)
-
-    population[child1].evaluateFitness()
-    population[child2].evaluateFitness()
-
-    // now replace worst in population with best of child1 or child2
-    if ( population[child1].getFitness() > population[child2].getFitness()) {
-      population.swap(worst, child1)
-//      println "Swapped: $child1 into $worst new fitness = ${population[child1].getFitness()}"
-    }
-    else {
-      population.swap(worst, child2)
-//      println "Swapped: $child2 into $worst new fitness = ${population[child2].getFitness()}"
-    }
+    population[child1].prePoint(population[best], xOverPoint)
+    population[child2].prePoint(population[secondBest], xOverPoint)
+    population[child2].postPoint(population[best], xOverPoint)
+    population[child1].postPoint(population[secondBest], xOverPoint)
     return completedOK
   }
 
+  int combineChildren(int best,
+                      int secondBest,
+                      int worst,
+                      int child1,
+                      int child2){
+    // for example replace worst in population with best of child1 or child2
+    // some versions could refer to best and secondBest
+    if ( population[child1].getFitness() > population[child2].getFitness())
+      population.swap(worst, child1)
+    else
+      population.swap(worst, child2)
+    return completedOK
+  }
   // processes fileLines to create the problem specific data structures
   //TODO complete and add properties as necessary
   int processFile(){
@@ -194,10 +190,6 @@ class SudukoPopulation extends DataClass{
       numbers.each { Integer n -> fixedNumbers << (n == 0) }
       fixed << fixedNumbers
     }
-//    println "Pre Board"
-//    preBoard.each{ println "$it"}
-//    println "\n Fixed Numbers"
-//    fixed.each{ println "$it"}
     return completedOK
   }
 

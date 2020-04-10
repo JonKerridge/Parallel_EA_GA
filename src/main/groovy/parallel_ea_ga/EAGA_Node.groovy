@@ -19,24 +19,30 @@ class EAGA_Node<T> implements CSProcess {
     data = fromRoot.read()
     while (!(data instanceof UniversalTerminator)){
       // processing a new population instance
-      T epData = (T)data
-      if (epData.seeds != null) {
-        long seed = (long)epData.seeds[nodeId]
+      T populationData = (T)data
+      if (populationData.seeds[nodeId] != null) {
+        long seed = (long)populationData.seeds[nodeId]
         rng = new Random(seed)
       }
-      else
-        rng = new Random()
+      else {
+        // create a seed and record it
+        // means seed values can be output
+        // each instance of the data will have different seeds
+        long seed = System.nanoTime()
+        populationData.seeds[nodeId] = seed
+        rng = new Random(seed)
+      }
       int best, secondBest, worst   // subscripts in population of node's manipulated individuals
       int child1, child2            // subscripts of children used in crossover
-      int ppn = epData.populationPerNode
-      int lastIndex = epData.lastIndex
-      double mutateProbability = epData.mutationProbability
-      if (epData.maximise){
+      int ppn = populationData.populationPerNode
+      int lastIndex = populationData.lastIndex
+      double mutateProbability = populationData.mutationProbability
+      if (populationData.maximise){
         worst = nodeId * ppn
         best = worst + ppn - 1
         secondBest = best - 1
         for ( i in worst .. best) {
-          epData.population[i].createIndividual(epData, rng)
+          populationData.population[i].createIndividual(populationData, rng)
         }
       }
       else { // minimising fitness
@@ -44,21 +50,29 @@ class EAGA_Node<T> implements CSProcess {
         secondBest = best + 1
         worst = best + ppn -1
         for ( i in best .. worst) {
-          epData.population[i].createIndividual(epData, rng)
+          populationData.population[i].createIndividual(populationData, rng)
         }
       }  // setting up conditional
       // children locations do not depend on maximise
       child1 = lastIndex + (nodeId * 2) + 1
       child2 = child1 + 1
 //      println "$nodeId: $best, $secondBest, $worst, $child1, $child2"
-      epData.population[child1].createIndividual(epData, rng)
-      epData.population[child2].createIndividual(epData, rng)
+      populationData.population[child1].createIndividual(populationData, rng)
+      populationData.population[child2].createIndividual(populationData, rng)
       // population now set up
       toRoot.write(new UniversalSignal()) // tell root that node has finished initialisation
       data = fromRoot.read()              // read signal from root
       // start of main evolution loop
       while (data instanceof UniversalSignal){
-        epData.&"$epData.crossover"(best, secondBest, worst, child1, child2, mutateProbability, rng)
+        if (rng.nextDouble() < populationData.crossoverProbability)
+          populationData.&"$populationData.crossover"(best, secondBest, worst, child1, child2, rng)
+        if (rng.nextDouble() < populationData.mutationProbability)
+          populationData.population[child1].mutate( rng)
+        if (rng.nextDouble() < populationData.mutationProbability)
+          populationData.population[child2].mutate( rng)
+        populationData.population[child1].evaluateFitness()
+        populationData.population[child2].evaluateFitness()
+        populationData.&"$populationData.combineChildren"(best, secondBest, worst, child1, child2)
         toRoot.write(new UniversalSignal())
         data = fromRoot.read()
       } // main loop

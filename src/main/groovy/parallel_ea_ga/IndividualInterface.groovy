@@ -8,13 +8,11 @@ interface IndividualInterface <T1, T2> {
   createIndividual(T2 population, Random rng)     // creates a member of the population
 
   evaluateFitness()   // evaluates the fitness function for an individual
-                      // only called internally
 
-  int getFitness()        // returns the individual's fitness
+  int getFitness()    // returns the individual's fitness in combine Children
                       // called when printing data about each generation in Root
 
   // undertakes a mutation operation on an individual
-  // is assumed to re-evaluate the individuals fitness
   mutate(Random rng)
 
   // the following implement crossover;

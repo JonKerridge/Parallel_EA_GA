@@ -24,7 +24,8 @@ class SudokuResult extends DataClass{
         "Time: ${data.timeTaken}; " +
         "Generations: ${data.generations}; " +
         "$s " +
-        "Fitness is ${data.population[data.first].getFitness()}"
+        "Fitness is ${data.population[data.first].getFitness()}\n"+
+        "Seeds: ${data.seeds}\n"
     resultNumber += 1
     return completedOK
   }

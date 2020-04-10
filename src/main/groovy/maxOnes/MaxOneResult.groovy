@@ -17,7 +17,8 @@ class MaxOneResult extends DataClass{
   //TODO change type of input Object to individual population
   int collector(MaxOnePopulation data){
       println "Result: $resultNumber = Time: ${data.timeTaken}; " +
-          "Generations: ${data.generations}\n "
+          "Generations: ${data.generations}\n " +
+          "Seeds: ${data.seeds}"
     resultNumber += 1
     return completedOK
   }
