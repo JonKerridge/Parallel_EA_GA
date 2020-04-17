@@ -5,6 +5,7 @@ import groovyParallelPatterns.UniversalTerminator
 import jcsp.lang.CSProcess
 import jcsp.lang.ChannelInput
 import jcsp.lang.ChannelOutput
+import tsp.TSPIndividual
 
 class EAGA_Node<T> implements CSProcess {
   ChannelInput fromRoot
@@ -36,7 +37,6 @@ class EAGA_Node<T> implements CSProcess {
       int child1, child2            // subscripts of children used in crossover
       int ppn = populationData.populationPerNode
       int lastIndex = populationData.lastIndex
-      double mutateProbability = populationData.mutationProbability
       if (populationData.maximise){
         worst = nodeId * ppn
         best = worst + ppn - 1
@@ -63,19 +63,28 @@ class EAGA_Node<T> implements CSProcess {
       toRoot.write(new UniversalSignal()) // tell root that node has finished initialisation
       data = fromRoot.read()              // read signal from root
       // start of main evolution loop
-      while (data instanceof UniversalSignal){
-        if (rng.nextDouble() < populationData.crossoverProbability)
+      boolean modified
+      while (data instanceof UniversalSignal) {
+        modified = false
+        if (rng.nextDouble() < populationData.crossoverProbability) {
           populationData.&"$populationData.crossover"(best, secondBest, worst, child1, child2, rng)
-        if (rng.nextDouble() < populationData.mutationProbability)
+          modified = true
+        }
+        if (rng.nextDouble() < populationData.mutationProbability){
           populationData.population[child1].mutate( rng)
-        if (rng.nextDouble() < populationData.mutationProbability)
           populationData.population[child2].mutate( rng)
-        populationData.population[child1].evaluateFitness()
-        populationData.population[child2].evaluateFitness()
-        populationData.&"$populationData.combineChildren"(best, secondBest, worst, child1, child2)
+          modified = true
+        }
+        if (modified) {
+          populationData.population[child1].evaluateFitness(populationData)
+          populationData.population[child2].evaluateFitness(populationData)
+          populationData.&"$populationData.combineChildren"(best, secondBest, worst, child1, child2)
+        }
         toRoot.write(new UniversalSignal())
         data = fromRoot.read()
       } // main loop
     } // processing data inputs
+    // data is Universal Terminator
+    assert data instanceof UniversalTerminator: "EAGA_Node expected UniversalTerminator"
   }
 }

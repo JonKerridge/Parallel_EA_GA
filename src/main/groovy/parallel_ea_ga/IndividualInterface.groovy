@@ -7,9 +7,9 @@ interface IndividualInterface <T1, T2> {
 
   createIndividual(T2 population, Random rng)     // creates a member of the population
 
-  evaluateFitness()   // evaluates the fitness function for an individual
+  evaluateFitness(T2 population)   // evaluates the fitness function for an individual
 
-  int getFitness()    // returns the individual's fitness in combine Children
+  BigDecimal getFitness()    // returns the individual's fitness used in combine Children
                       // called when printing data about each generation in Root
 
   // undertakes a mutation operation on an individual

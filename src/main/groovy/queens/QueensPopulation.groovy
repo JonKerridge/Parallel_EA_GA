@@ -1,11 +1,11 @@
-package parallel_ea_ga
+package queens
 
 import groovyParallelPatterns.DataClass
 
-class EAGA_Population extends DataClass{
+class QueensPopulation extends DataClass{
 
   //TODO insert the required individual type
-  List  population = []  //  this should be renamed individuals
+  List <QueensIndividual> population = []  //
   boolean solutionFound
   List fileLines = [] // used to store inout file if used
 
@@ -27,7 +27,7 @@ class EAGA_Population extends DataClass{
   static String convergence = "convergence"         // determines if there is convergence to a solution
                                                     // returns a boolean true if converged false otherwise
                                                     // called in Root process
-  static String crossover = "crossover"             // used to undertake the crossover operation
+  static String crossover = "queensCrossover"             // used to undertake the crossover operation
                                                     // called from a Node process
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into population
@@ -88,7 +88,7 @@ class EAGA_Population extends DataClass{
       // really would like to code
       // population << new I(params)  where I is the generic type
       //TODO make sure that an empty individual is returned
-        population << null  // MUST be changed
+        population << new QueensIndividual(numberOfGenes) // MUST be changed
       return normalContinuation
     }
   }
@@ -100,9 +100,8 @@ class EAGA_Population extends DataClass{
   }
 
   int partition(List m, int start, int end){
-    BigDecimal pivotValue
+    def pivotValue
     pivotValue = m[start].getFitness()
-    // getFitness returns a BigDecimal
 //    println "P1: $start, $end, $pivotValue"
     int left, right
     left = start+1
@@ -137,31 +136,129 @@ class EAGA_Population extends DataClass{
   }
 
   //TODO modify the convergence criterion
+//  BigDecimal minFitness = 100.0
+//  int minCount
+//  List <Integer> minBoard
+
   boolean convergence(){
-    // depends on the population and the fitness measure
-    // this example is for a solution to the MaxOnes problems
-    // where the fitness is best when all Genes are 1
-    // getFitness returns a BigDecimal
-    return (population[first].getFitness()  == numberOfGenes)
+//    BigDecimal currentFitness = population[first].getFitness()
+//    if (currentFitness < minFitness){
+//      minCount = 0
+//      minFitness = currentFitness
+//      minBoard = []
+//      for (i in 1..< population[first].board.size())
+//        minBoard << population[first].board[i]  // omit initial board null
+//    }
+//    minCount += 1
+//    if (minCount > 1000){
+//      println " Best Board: $minBoard, Fitness: $minFitness"
+//      return true
+//    }
+//    else return false
+    return (population[first].getFitness() == 0.0)
   }
 
-  // must be modified for each application
-  // crossover undertakes a crossover operation on two members of the population
-  // rng is used to create one or more cross over points
-  // assuming ONE crossover point splitting an individual into before and after the point
-  // population[child1] = population[best].before plus population[secondBest]after
-  // population[child2] = population[secondBest].before plus population[best]after
-  int crossover(int best,
+  def doCrossover (List sB, List mB, List mSb, List eB, int child){
+
+    // find common values in mB and mSB and remove from mB
+    // leaves value in mB that have to be inserted into child1
+    int mSize = mSb.size()
+//    println "X0: $sB\n$mB\n$eB\n$mSb"
+    for ( i in 0 ..< mSize) {
+      int v = mSb[i]
+      int j = 0
+      boolean notFound = true
+      while ( (notFound) && (j < mSize)) {
+        if ( v == mB[j]) {
+          notFound = false
+          mB.remove(j)   // removes the jth element
+        }
+        else
+          j = j + 1
+      }
+    }   // end of for  mB contains non-common elements
+//    println "X1: $sB\n$mB\n$eB\n$mSb"
+    // now iterate through mSb looking for matches in sB
+    // replace any with values from those remaining in mB
+    for ( i in 0..< mSize) {
+      if (sB.contains(mSb[i])) {
+        int v = mSb[i]
+        int j = 0
+        boolean notFound = true
+        while  (notFound) {
+          if (v == sB[j]) {
+            notFound = false
+            sB[j] = mB.pop()
+          }
+          else
+            j = j + 1
+        }
+      }
+    } // end of for
+//    println "X2: $sB\n$mB\n$eB\n$mSb"
+    // mow iterate through mSb for matches in eB
+    // and replace any with remaining values from mB
+
+    for ( i in 0..< mSize) {
+      if (eB.contains(mSb[i])) {
+        int v = mSb[i]
+        int j = 0
+        boolean notFound = true
+        while  (notFound) {
+          if (v == eB[j]) {
+            notFound = false
+            eB[j] = mB.pop()
+          }
+          else
+            j = j + 1
+        }
+      }
+    } // end for mB should now be empty
+// board[0] is always null
+    population[child].board = [null] +sB + mSb + eB as List<Integer>
+//    println "X3: $sB\n$mB\n$eB\n$mSb\n${population[child].board}"
+  } // end of doCrossover
+
+  static List <Integer> extractParts(int start, int end, List<Integer> source){
+    List<Integer> result = []
+    for ( i in start ..< end) result << source[i]
+    return result
+  }
+
+  int queensCrossover(int best,
                 int secondBest,
                 int worst,
                 int child1,
                 int child2,
                 Random rng) {
-    int xOverPoint = rng.nextInt(numberOfGenes)
-    population[child1].prePoint(population[best], xOverPoint)
-    population[child2].prePoint(population[secondBest], xOverPoint)
-    population[child2].postPoint(population[best], xOverPoint)
-    population[child1].postPoint(population[secondBest], xOverPoint)
+    // must ensure crossover points are not 0 as board[0] is not used
+    int c1 = rng.nextInt(numberOfGenes-3) + 2
+    int c2 = rng.nextInt(numberOfGenes-2) + 1
+    //ensure c1 and c2 are different
+    while ( c1 == c2) c2 = rng.nextInt(numberOfGenes-2) + 1
+    if (c1 > c2) (c1,c2)=[c2,c1]  // ensure c1 < c2
+    // for child1 NB route[0] and route[N] are fixed as 1
+    //child1  1 ..< c1  = best 1..<c1
+    //child1 c1 ..< c2   = secondBest c1 ..< c2
+    //child1 c2 ..< N = best c2 ..< N     where N is number of cities
+    // s = start, m = middle, e = end of B best or sB secondBest
+
+    List <Integer> sB = extractParts(1, c1, population[best].board)
+    List <Integer> mB = extractParts(c1, c2, population[best].board)
+    List <Integer> mSb = extractParts(c1, c2, population[secondBest].board)
+    List <Integer> eB = extractParts(c2, numberOfGenes+1, population[best].board)
+    doCrossover(sB, mB, mSb, eB, child1)
+
+    // now do it the other way round
+//    sB = population[secondBest].route.getAt(1 ..< c1)
+//    mB = population[secondBest].route.getAt(c1 ..< c2)
+//    mSb = population[best].route.getAt(c1 ..< c2)
+//    eB = population[secondBest].route.getAt(c2 ..< numberOfGenes)
+    sB = extractParts(1, c1, population[secondBest].board)
+    mB = extractParts(c1, c2, population[secondBest].board)
+    mSb = extractParts(c1, c2, population[best].board)
+    eB = extractParts(c2, numberOfGenes+1, population[secondBest].board)
+    doCrossover(sB, mB, mSb, eB, child2)
     return completedOK
   }
 
@@ -172,7 +269,7 @@ class EAGA_Population extends DataClass{
                       int child2){
     // for example replace worst in population with best of child1 or child2
     // some versions could refer to best and secondBest
-    if ( population[child1].getFitness() > population[child2].getFitness())
+    if ( population[child1].getFitness() < population[child2].getFitness())
       population.swap(worst, child1)
     else
       population.swap(worst, child2)

@@ -102,7 +102,7 @@ class SudukoPopulation extends DataClass{
   }
 
   int partition(List m, int start, int end){
-    def pivotValue
+    BigDecimal pivotValue
     pivotValue = m[start].getFitness()
 //    println "P1: $start, $end, $pivotValue"
     int left, right

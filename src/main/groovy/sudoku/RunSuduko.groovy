@@ -8,9 +8,9 @@ import groovyParallelPatterns.terminals.Emit
 import jcsp.lang.Channel
 import parallel_ea_ga.EAGA_Engine
 
-int populationPerNode = 4
+int populationPerNode = 16
 int geneLength = 9
-int nodes = 8
+int nodes = 2
 double crossoverProbability = 1.0
 double mutateProbability = 0.5
 int instances = 3
@@ -32,7 +32,7 @@ def eDetails = new DataDetails(
     dCreateMethod: SudukoPopulation.createInstance,
     dCreateData: [geneLength, populationPerNode,
                   nodes, maximise, crossoverProbability,
-                  mutateProbability, seeds, fileName]
+                  mutateProbability, null, fileName]
 )
 def rDetails = new ResultDetails (
     rName: SudokuResult.getName(),
@@ -53,7 +53,7 @@ def eaEngine = new EAGA_Engine<SudukoPopulation>(
     input: chan1.in(),
     output: chan2.out(),
     printGeneration: false,
-    generationLimit: 300000,
+    generationLimit: 100000,
     nodes: nodes
 )
 

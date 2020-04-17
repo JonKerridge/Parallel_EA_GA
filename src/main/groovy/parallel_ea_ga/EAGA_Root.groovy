@@ -21,6 +21,8 @@ class EAGA_Root<T> implements CSProcess{
     int nodes = toNodes.size()
     Object data
     data = input.read()
+    long previousGenerationTime, generationTime
+    previousGenerationTime = System.currentTimeMillis()
     while (!(data instanceof UniversalTerminator)){
       long startTime = System.currentTimeMillis()
       T epData = data as T
@@ -37,9 +39,13 @@ class EAGA_Root<T> implements CSProcess{
       for (i in 0 ..< nodes) fromNodes.read()
       // now sort the population
       epData.&"$epData.sortMethod"()  // should check return value
-      if (printGeneration)
+      if (printGeneration) {
+        generationTime = System.currentTimeMillis()
         println "Generation - ${epData.generations} : " +
-            "Fitness = ${epData.population[epData.first].getFitness()}"
+            "Fitness = ${epData.population[epData.first].getFitness()}, " +
+            "InitTime= ${generationTime - previousGenerationTime}"
+        previousGenerationTime = generationTime
+      }
       // now start evolution loop testing for convergence or too many generations
       while (!(epData.&"$epData.convergence"() ) && ( epData.generations <= generationLimit)){
         epData.generations += 1
@@ -49,9 +55,13 @@ class EAGA_Root<T> implements CSProcess{
         for (i in 0 ..< nodes) fromNodes.read()
         // now sort the population
         epData.&"$epData.sortMethod"()  // should check return value
-        if (printGeneration)
+        if (printGeneration) {
+          generationTime = System.currentTimeMillis()
           println "Generation - ${epData.generations} : " +
-              "Fitness = ${epData.population[epData.first].getFitness()}"
+              "Fitness = ${epData.population[epData.first].getFitness()}, " +
+              "Cycle Time= ${generationTime - previousGenerationTime}"
+          previousGenerationTime = generationTime
+        }
       }
       epData.solutionFound = (epData.generations <= generationLimit)
       long endTime = System.currentTimeMillis()

@@ -3,7 +3,7 @@ package sudoku
 import parallel_ea_ga.IndividualInterface
 
 class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPopulation> {
-  int fitness = -1
+  BigDecimal fitness = -1
   List nodesVisited = []
   List<List<Integer>> board
   int geneLength = 9  // modify this throughout once working
@@ -43,7 +43,7 @@ class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPo
 //      for ( e in 0..< 9) board[row][e] = revisedRow[e]
       row = row + 1
     }
-    evaluateFitness()
+    evaluateFitness(population)
 //    String s ="\nCreated Board\n"
 //    board.each {s = s + "$it" + "\n"}
 //    s = s + "Created Fitness = $fitness\n"
@@ -86,8 +86,8 @@ class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPo
   }
 
   @Override
-  def evaluateFitness() {
-    fitness = 0
+  evaluateFitness(SudukoPopulation population) {
+     fitness = 0
     for ( r in 0 ..<3){
       for (c in 0 ..< 3){
         fitness = fitness + countDifferentDigits(createBlocks(r,c))
@@ -98,7 +98,7 @@ class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPo
   }
 
   @Override
-  int getFitness() {
+  BigDecimal getFitness() {
     return fitness
   }
 

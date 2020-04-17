@@ -4,7 +4,7 @@ import parallel_ea_ga.IndividualInterface
 
 class MaxOneIndividual implements IndividualInterface <MaxOneIndividual, MaxOnePopulation>{
   int geneLength
-  int fitness = -1
+  BigDecimal fitness = -1
   int [] genes = new int[geneLength]
 
   MaxOneIndividual(int geneLength, int fitness) {
@@ -21,12 +21,12 @@ class MaxOneIndividual implements IndividualInterface <MaxOneIndividual, MaxOneP
   }
 
   @Override
-  evaluateFitness() {
+  evaluateFitness(MaxOnePopulation population) {
     fitness = 0
     for ( i in 0 ..< geneLength) fitness = fitness + genes[i]
   }
 
-  int getFitness(){
+  BigDecimal getFitness(){
     return fitness
   }
 
@@ -34,7 +34,6 @@ class MaxOneIndividual implements IndividualInterface <MaxOneIndividual, MaxOneP
   mutate(Random rng) {
     int mutationPoint = rng.nextInt(geneLength)
     genes[mutationPoint] = 1 - genes[mutationPoint]
-    evaluateFitness()
   }
 
   @Override
