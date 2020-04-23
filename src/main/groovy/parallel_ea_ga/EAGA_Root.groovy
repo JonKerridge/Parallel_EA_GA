@@ -29,7 +29,7 @@ class EAGA_Root<T> implements CSProcess{
       // see if there is a file to read as part of individual creation
       if ( epData.fileName != ""){
         // file to read and store lines in fileLines
-        println "Reading data file: ${epData.fileName} "
+//        println "Reading data file: ${epData.fileName} "
         new File(epData.fileName).eachLine {String line -> epData.fileLines << line }
         epData.&"$epData.processFile"()
       }

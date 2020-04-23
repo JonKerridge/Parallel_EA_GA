@@ -2,10 +2,10 @@ package tsp
 
 import groovyParallelPatterns.DataClass
 
-class TSPPopulation extends DataClass{
+class TSPPopulationRecord extends DataClass{
 
   //TODO insert the required individual type
-  List  <TSPIndividual> population = []  //
+  List  <TSPIndividualRecord> population = []  //
   boolean solutionFound
   List fileLines = [] // used to store inout file if used
 
@@ -90,7 +90,7 @@ class TSPPopulation extends DataClass{
       // really would like to code
       // population << new I(params)  where I is the generic type
       //TODO make sure that an empty individual is returned
-        population << new TSPIndividual(numberOfGenes)  // MUST be changed
+        population << new TSPIndividualRecord(numberOfGenes)  // MUST be changed
       return normalContinuation
     }
   }
@@ -141,20 +141,24 @@ class TSPPopulation extends DataClass{
   BigDecimal minFitness = 1000000
   int minCount
   List<Integer> minRoute
+  List<Integer> minNodesVisited
   boolean convergence(){
     BigDecimal currentFitness = population[first].getFitness()
     if (currentFitness < minFitness) {
       minFitness = currentFitness
       minCount = 0
       minRoute = []
+      minNodesVisited = []
       for ( i in 0 ..< population[first].route.size())
         minRoute << population[first].route[i]
+      for ( i in 0 ..< population[first].nodesVisited.size())
+        minNodesVisited << population[first].nodesVisited[i]
     }
     minCount += 1
     if (minFitness > 800) return false
 //    println"Convergence: $minFitness -> $first:= ${population[first].getFitness()}; $last:= ${population[last].getFitness()}"
     if ( minCount > 1000){
-      println "Solution = Fitness: $minFitness, Minimum Route: $minRoute "
+      println "Fitness, $minFitness, Route, $minRoute, Nodes, $minNodesVisited"
       return true
     } else return false
   }

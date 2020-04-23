@@ -1,15 +1,13 @@
-package tsp
+package queens
 
 import groovyParallelPatterns.DataClass
 
-class TSPPopulation extends DataClass{
+class QueensPopulationRecord extends DataClass{
 
   //TODO insert the required individual type
-  List  <TSPIndividual> population = []  //
+  List <QueensIndividualRecord> population = []  //
   boolean solutionFound
   List fileLines = [] // used to store inout file if used
-
-  List<List<Integer>> distances = []
 
   int numberOfGenes       //length of an individual's chromosome
   int populationPerNode   // must be greater than 3
@@ -29,7 +27,7 @@ class TSPPopulation extends DataClass{
   static String convergence = "convergence"         // determines if there is convergence to a solution
                                                     // returns a boolean true if converged false otherwise
                                                     // called in Root process
-  static String crossover = "crossoverDantzig42"    // used to undertake the crossover operation
+  static String crossover = "queensCrossover"             // used to undertake the crossover operation
                                                     // called from a Node process
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into population
@@ -90,7 +88,7 @@ class TSPPopulation extends DataClass{
       // really would like to code
       // population << new I(params)  where I is the generic type
       //TODO make sure that an empty individual is returned
-        population << new TSPIndividual(numberOfGenes)  // MUST be changed
+        population << new QueensIndividualRecord(numberOfGenes) // MUST be changed
       return normalContinuation
     }
   }
@@ -102,7 +100,7 @@ class TSPPopulation extends DataClass{
   }
 
   int partition(List m, int start, int end){
-    BigDecimal pivotValue
+    def pivotValue
     pivotValue = m[start].getFitness()
 //    println "P1: $start, $end, $pivotValue"
     int left, right
@@ -138,25 +136,16 @@ class TSPPopulation extends DataClass{
   }
 
   //TODO modify the convergence criterion
-  BigDecimal minFitness = 1000000
-  int minCount
-  List<Integer> minRoute
+//  BigDecimal minFitness = 100.0
+//  int minCount
+//  List <Integer> minBoard
+
   boolean convergence(){
-    BigDecimal currentFitness = population[first].getFitness()
-    if (currentFitness < minFitness) {
-      minFitness = currentFitness
-      minCount = 0
-      minRoute = []
-      for ( i in 0 ..< population[first].route.size())
-        minRoute << population[first].route[i]
-    }
-    minCount += 1
-    if (minFitness > 800) return false
-//    println"Convergence: $minFitness -> $first:= ${population[first].getFitness()}; $last:= ${population[last].getFitness()}"
-    if ( minCount > 1000){
-      println "Solution = Fitness: $minFitness, Minimum Route: $minRoute "
+    if (population[first].getFitness() == 0.0){
+      println "Nodes Visited = ${population[first].nodesVisited}"
       return true
-    } else return false
+    } else
+    return false
   }
 
   def doCrossover (List sB, List mB, List mSb, List eB, int child){
@@ -215,28 +204,28 @@ class TSPPopulation extends DataClass{
         }
       }
     } // end for mB should now be empty
-    // now construct the final route inserting city 1 to start and end
-    population[child].route = [1] + sB + mSb + eB + [1]
-//    println "X3: $sB\n$mB\n$eB\n$mSb\n${population[child].route}"
+// board[0] is always null
+    population[child].board = [null] +sB + mSb + eB as List<Integer>
+//    println "X3: $sB\n$mB\n$eB\n$mSb\n${population[child].board}"
   } // end of doCrossover
 
-  List <Integer> extractParts(int start, int end, List<Integer> source){
+  static List <Integer> extractParts(int start, int end, List<Integer> source){
     List<Integer> result = []
     for ( i in start ..< end) result << source[i]
     return result
   }
 
-  int crossoverDantzig42 (int best,
-                          int secondBest,
-                          int worst,
-                          int child1,
-                          int child2,
-                          Random rng){
-    // must ensure crossover points are not 0 and 42, which are both fixed at 1
-    int c1 = rng.nextInt(numberOfGenes - 1) + 1
-    int c2 = rng.nextInt(numberOfGenes - 1) + 1
+  int queensCrossover(int best,
+                int secondBest,
+                int worst,
+                int child1,
+                int child2,
+                Random rng) {
+    // must ensure crossover points are not 0 as board[0] is not used
+    int c1 = rng.nextInt(numberOfGenes-3) + 2
+    int c2 = rng.nextInt(numberOfGenes-2) + 1
     //ensure c1 and c2 are different
-    while ( c1 == c2) c2 = rng.nextInt(numberOfGenes - 1) + 1
+    while ( c1 == c2) c2 = rng.nextInt(numberOfGenes-2) + 1
     if (c1 > c2) (c1,c2)=[c2,c1]  // ensure c1 < c2
     // for child1 NB route[0] and route[N] are fixed as 1
     //child1  1 ..< c1  = best 1..<c1
@@ -244,10 +233,10 @@ class TSPPopulation extends DataClass{
     //child1 c2 ..< N = best c2 ..< N     where N is number of cities
     // s = start, m = middle, e = end of B best or sB secondBest
 
-    List <Integer> sB = extractParts(1, c1, population[best].route)
-    List <Integer> mB = extractParts(c1, c2, population[best].route)
-    List <Integer> mSb = extractParts(c1, c2, population[secondBest].route)
-    List <Integer> eB = extractParts(c2, numberOfGenes, population[best].route)
+    List <Integer> sB = extractParts(1, c1, population[best].board)
+    List <Integer> mB = extractParts(c1, c2, population[best].board)
+    List <Integer> mSb = extractParts(c1, c2, population[secondBest].board)
+    List <Integer> eB = extractParts(c2, numberOfGenes+1, population[best].board)
     doCrossover(sB, mB, mSb, eB, child1)
 
     // now do it the other way round
@@ -255,10 +244,10 @@ class TSPPopulation extends DataClass{
 //    mB = population[secondBest].route.getAt(c1 ..< c2)
 //    mSb = population[best].route.getAt(c1 ..< c2)
 //    eB = population[secondBest].route.getAt(c2 ..< numberOfGenes)
-    sB = extractParts(1, c1, population[secondBest].route)
-    mB = extractParts(c1, c2, population[secondBest].route)
-    mSb = extractParts(c1, c2, population[best].route)
-    eB = extractParts(c2, numberOfGenes, population[secondBest].route)
+    sB = extractParts(1, c1, population[secondBest].board)
+    mB = extractParts(c1, c2, population[secondBest].board)
+    mSb = extractParts(c1, c2, population[best].board)
+    eB = extractParts(c2, numberOfGenes+1, population[secondBest].board)
     doCrossover(sB, mB, mSb, eB, child2)
     return completedOK
   }
@@ -267,63 +256,20 @@ class TSPPopulation extends DataClass{
                       int secondBest,
                       int worst,
                       int child1,
-                      int child2) {
-    BigDecimal bestFit, secondFit, worstFit, child1Fit, child2Fit, worst2Fit
-    int secondWorst
-    secondWorst = worst - 1
-    child1Fit = population[child1].getFitness()
-    child2Fit = population[child2].getFitness()
-    worstFit = population[worst].getFitness()
-    worst2Fit = population[secondWorst].getFitness()
+                      int child2){
     // for example replace worst in population with best of child1 or child2
     // some versions could refer to best and secondBest
-    if (child1Fit < child2Fit)
-      if (child2Fit < worst2Fit) {
-//        println"overwriting both: w < c1, 2w < c2"
-        population.swap(worst, child1)
-        population.swap(secondWorst, child2)
-      } else {
-        population.swap(worst, child1)
-//        println "overwritng w < c1"
-      }
+    if ( population[child1].getFitness() < population[child2].getFitness())
+      population.swap(worst, child1)
     else
-      if (child1Fit < worst2Fit) {
-        population.swap(worst, child2)
-        population.swap(secondWorst, child1)
-//        println"overwriting both: w < c2, 2w < c1"
-      } else {
-        population.swap(worst, child2)
-//        println "overwritng w < c2"
-      }
-//    if ( population[child1].getFitness() < population[child2].getFitness())
-//      population.swap(worst, child1)
-//    else
-//      population.swap(worst, child2)
+      population.swap(worst, child2)
     return completedOK
   }
 
   // processes fileLines to create the problem specific data structures
   //TODO complete and add properties as necessary
   int processFile(){
-    distances[0] = [0]
-    int row
-    row = 1
-    // process data lines into lower triangular
-    fileLines.each {String line ->
-      distances[row]= [0]
-      List <String> values = line.tokenize(',')
-      for ( v in 0 ..< values.size()) distances[row][v+1] = Integer.parseInt(values[v])
-      row += 1
-    }
-    int rows = distances.size()
-    for ( r in 1 ..< rows)
-      for ( rc in r+1 ..< rows)
-        distances[r][rc] = distances[rc][r]
-
-//    println "\nSquare\n"
-//    distances.each{println "$it"}
-
-    return completedOK
+    return -100
   }
 
 }

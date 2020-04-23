@@ -15,7 +15,7 @@ new File(inFile).eachLine {line ->
 //println "Triangular\n"
 //distances.each{println "$it"}
 
-int rows = 7
+int rows = 31
 for ( r in 1 ..< rows)
   for ( rc in r+1 ..< rows)
     distances[r][rc] = distances[rc][r]

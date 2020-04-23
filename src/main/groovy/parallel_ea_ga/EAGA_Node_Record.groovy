@@ -6,7 +6,7 @@ import jcsp.lang.CSProcess
 import jcsp.lang.ChannelInput
 import jcsp.lang.ChannelOutput
 
-class EAGA_Node<T> implements CSProcess {
+class EAGA_Node_Record<T> implements CSProcess {
   ChannelInput fromRoot
   ChannelOutput toRoot
   int nodeId =-1
@@ -42,6 +42,7 @@ class EAGA_Node<T> implements CSProcess {
         secondBest = best - 1
         for ( i in worst .. best) {
           populationData.population[i].createIndividual(populationData, rng)
+          populationData.population[i].updateNodesVisited(nodeId)
         }
       }
       else { // minimising fitness
@@ -77,6 +78,8 @@ class EAGA_Node<T> implements CSProcess {
         if (modified) {
           populationData.population[child1].evaluateFitness(populationData)
           populationData.population[child2].evaluateFitness(populationData)
+          populationData.population[child1].updateNodesVisited(nodeId)
+          populationData.population[child2].updateNodesVisited(nodeId)
           populationData.&"$populationData.combineChildren"(best, secondBest, worst, child1, child2)
         }
         toRoot.write(new UniversalSignal())
