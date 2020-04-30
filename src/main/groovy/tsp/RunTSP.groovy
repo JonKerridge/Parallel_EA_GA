@@ -12,7 +12,7 @@ import sudoku.SudukoPopulation
 
 int populationPerNode = 4
 int cities = 42
-int nodes = 15
+int nodes = 16
 double crossoverProbability = 1.0
 double mutateProbability = 1.0
 int instances = 100

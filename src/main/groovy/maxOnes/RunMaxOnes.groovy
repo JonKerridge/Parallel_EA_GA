@@ -9,7 +9,7 @@ import jcsp.lang.Channel
 import parallel_ea_ga.EAGA_Engine
 
 int populationPerNode = 8
-int geneLength = 128
+int geneLength = 1024
 int nodes = 8
 double crossoverProbability = 1.0
 double mutateProbability = 0.5
@@ -28,6 +28,7 @@ def eDetails = new DataDetails(dName: MaxOnePopulation.getName(),
     dCreateData: [geneLength, populationPerNode,
                   nodes, maximise, crossoverProbability,
                   mutateProbability, null, fileName])
+
 def rDetails = new ResultDetails(rName: MaxOneResult.getName(),
     rInitMethod: MaxOneResult.initialise,
     rCollectMethod: MaxOneResult.collector,
@@ -57,6 +58,7 @@ println " MaxOnes- nodes, $nodes, " +
     "populationPerNode, $populationPerNode, " +
     " Genes, $geneLength, " +
     "mutateProbability, $mutateProbability, " +
+    "crossoverProbability, $crossoverProbability, " +
     "instances, $instances, " +
     "total time, ${endTime - startTime}"
 

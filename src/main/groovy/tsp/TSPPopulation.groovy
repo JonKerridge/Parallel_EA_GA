@@ -5,7 +5,7 @@ import groovyParallelPatterns.DataClass
 class TSPPopulation extends DataClass{
 
   //TODO insert the required individual type
-  List  <TSPIndividual> population = []  //
+  List  <TSPIndividual> individuals = []  //
   boolean solutionFound
   List fileLines = [] // used to store inout file if used
 
@@ -20,22 +20,22 @@ class TSPPopulation extends DataClass{
   Double mutationProbability = null   // probability a child will be mutated 0.0 ..< 1.0
   String fileName = ""                // some problems will need file input to create individuals
   static String processFile = "processFile"      // used to read the individual creation
-            // may require the addition of further data fields in the population
+            // may require the addition of further data fields in the individuals
   // unless otherwise stated these methods return completedOK unless otherwise indicated
   static String initialiseMethod = "initialise"     // used to initialise the number of generated instances
   static String createInstance = "create"           // creates each instance object but not the individuals
                                                     // returns normalCompletion or normalTermination
-  static String sortMethod = "quickSort"            // sorts population into ascending order called in Root
+  static String sortMethod = "quickSort"            // sorts individuals into ascending order called in Root
   static String convergence = "convergence"         // determines if there is convergence to a solution
                                                     // returns a boolean true if converged false otherwise
                                                     // called in Root process
   static String crossover = "crossoverDantzig42"    // used to undertake the crossover operation
                                                     // called from a Node process
   static String combineChildren = "combineChildren" // called after crossover and mutation
-                                                    // to combine one or both children into population
+                                                    // to combine one or both children into individuals
 
-  int first, last             // index of first and last entry in population, depends on maximise
-  int lastIndex               // subscript of last entry in population,regardless
+  int first, last             // index of first and last entry in individuals, depends on maximise
+  int lastIndex               // subscript of last entry in individuals,regardless
   static int instance
   static int instances
   long timeTaken
@@ -52,7 +52,7 @@ class TSPPopulation extends DataClass{
   int create(List d){
     if ( instance == instances) return normalTermination
     else {
-      // numberOfGenes, populationPerNode, nodes, maximise,
+      // numberOfQueens, populationPerNode, nodes, maximise,
       // crossoverProbability, mutationProbability, [seeds], fileName
       numberOfGenes = (int)d[0]
       populationPerNode = (int)d[1]
@@ -73,7 +73,7 @@ class TSPPopulation extends DataClass{
       assert nodes >= 1: "Population: nodes ($nodes) must be >= 1"
       assert mutationProbability != null: "Population: mutationProbability must be specified"
 
-      // set values of first and last index in population, depends on maximise
+      // set values of first and last index in individuals, depends on maximise
       lastIndex = (nodes * populationPerNode) - 1
       if (maximise) {
         first = lastIndex
@@ -84,20 +84,20 @@ class TSPPopulation extends DataClass{
       }
       instance = instance + 1
       generations = 0
-      population = []
-      // initialise population to zero values
+      individuals = []
+      // initialise individuals to zero values
       for (i in 0 .. lastIndex + (nodes * 2))
       // really would like to code
-      // population << new I(params)  where I is the generic type
+      // individuals << new I(params)  where I is the generic type
       //TODO make sure that an empty individual is returned
-        population << new TSPIndividual(numberOfGenes)  // MUST be changed
+        individuals << new TSPIndividual(numberOfGenes)  // MUST be changed
       return normalContinuation
     }
   }
 
   int quickSort( ){
     // always sorts into ascending order
-    quickSortRun ( population, 0, lastIndex)
+    quickSortRun ( individuals, 0, lastIndex)
     return  completedOK
   }
 
@@ -142,17 +142,17 @@ class TSPPopulation extends DataClass{
   int minCount
   List<Integer> minRoute
   boolean convergence(){
-    BigDecimal currentFitness = population[first].getFitness()
+    BigDecimal currentFitness = individuals[first].getFitness()
     if (currentFitness < minFitness) {
       minFitness = currentFitness
       minCount = 0
       minRoute = []
-      for ( i in 0 ..< population[first].route.size())
-        minRoute << population[first].route[i]
+      for ( i in 0 ..< individuals[first].route.size())
+        minRoute << individuals[first].route[i]
     }
     minCount += 1
     if (minFitness > 800) return false
-//    println"Convergence: $minFitness -> $first:= ${population[first].getFitness()}; $last:= ${population[last].getFitness()}"
+//    println"Convergence: $minFitness -> $first:= ${individuals[first].getFitness()}; $last:= ${individuals[last].getFitness()}"
     if ( minCount > 1000){
       println "Solution = Fitness: $minFitness, Minimum Route: $minRoute "
       return true
@@ -216,8 +216,8 @@ class TSPPopulation extends DataClass{
       }
     } // end for mB should now be empty
     // now construct the final route inserting city 1 to start and end
-    population[child].route = [1] + sB + mSb + eB + [1]
-//    println "X3: $sB\n$mB\n$eB\n$mSb\n${population[child].route}"
+    individuals[child].route = [1] + sB + mSb + eB + [1]
+//    println "X3: $sB\n$mB\n$eB\n$mSb\n${individuals[child].route}"
   } // end of doCrossover
 
   List <Integer> extractParts(int start, int end, List<Integer> source){
@@ -226,9 +226,8 @@ class TSPPopulation extends DataClass{
     return result
   }
 
-  int crossoverDantzig42 (int best,
-                          int secondBest,
-                          int worst,
+  int crossoverDantzig42 (int parent1,
+                          int parent2,
                           int child1,
                           int child2,
                           Random rng){
@@ -244,61 +243,55 @@ class TSPPopulation extends DataClass{
     //child1 c2 ..< N = best c2 ..< N     where N is number of cities
     // s = start, m = middle, e = end of B best or sB secondBest
 
-    List <Integer> sB = extractParts(1, c1, population[best].route)
-    List <Integer> mB = extractParts(c1, c2, population[best].route)
-    List <Integer> mSb = extractParts(c1, c2, population[secondBest].route)
-    List <Integer> eB = extractParts(c2, numberOfGenes, population[best].route)
+    List <Integer> sB = extractParts(1, c1, individuals[parent1].route)
+    List <Integer> mB = extractParts(c1, c2, individuals[parent1].route)
+    List <Integer> mSb = extractParts(c1, c2, individuals[parent2].route)
+    List <Integer> eB = extractParts(c2, numberOfGenes, individuals[parent1].route)
     doCrossover(sB, mB, mSb, eB, child1)
 
     // now do it the other way round
-//    sB = population[secondBest].route.getAt(1 ..< c1)
-//    mB = population[secondBest].route.getAt(c1 ..< c2)
-//    mSb = population[best].route.getAt(c1 ..< c2)
-//    eB = population[secondBest].route.getAt(c2 ..< numberOfGenes)
-    sB = extractParts(1, c1, population[secondBest].route)
-    mB = extractParts(c1, c2, population[secondBest].route)
-    mSb = extractParts(c1, c2, population[best].route)
-    eB = extractParts(c2, numberOfGenes, population[secondBest].route)
+//    sB = individuals[secondBest].route.getAt(1 ..< c1)
+//    mB = individuals[secondBest].route.getAt(c1 ..< c2)
+//    mSb = individuals[best].route.getAt(c1 ..< c2)
+//    eB = individuals[secondBest].route.getAt(c2 ..< numberOfQueens)
+    sB = extractParts(1, c1, individuals[parent2].route)
+    mB = extractParts(c1, c2, individuals[parent2].route)
+    mSb = extractParts(c1, c2, individuals[parent1].route)
+    eB = extractParts(c2, numberOfGenes, individuals[parent2].route)
     doCrossover(sB, mB, mSb, eB, child2)
     return completedOK
   }
 
-  int combineChildren(int best,
-                      int secondBest,
-                      int worst,
+  int combineChildren(int parent1,
+                      int parent2,
+                      int worst1,
+                      int worst2,
                       int child1,
                       int child2) {
-    BigDecimal bestFit, secondFit, worstFit, child1Fit, child2Fit, worst2Fit
-    int secondWorst
-    secondWorst = worst - 1
-    child1Fit = population[child1].getFitness()
-    child2Fit = population[child2].getFitness()
-    worstFit = population[worst].getFitness()
-    worst2Fit = population[secondWorst].getFitness()
-    // for example replace worst in population with best of child1 or child2
+    BigDecimal child1Fit, child2Fit, worst2Fit
+    child1Fit = individuals[child1].getFitness()
+    child2Fit = individuals[child2].getFitness()
+    worst2Fit = individuals[worst2].getFitness()
+    // for example replace worst in individuals with best of child1 or child2
     // some versions could refer to best and secondBest
     if (child1Fit < child2Fit)
       if (child2Fit < worst2Fit) {
 //        println"overwriting both: w < c1, 2w < c2"
-        population.swap(worst, child1)
-        population.swap(secondWorst, child2)
+        individuals.swap(worst1, child1)
+        individuals.swap(worst2, child2)
       } else {
-        population.swap(worst, child1)
+        individuals.swap(worst1, child1)
 //        println "overwritng w < c1"
       }
     else
       if (child1Fit < worst2Fit) {
-        population.swap(worst, child2)
-        population.swap(secondWorst, child1)
+        individuals.swap(worst1, child2)
+        individuals.swap(worst2, child1)
 //        println"overwriting both: w < c2, 2w < c1"
       } else {
-        population.swap(worst, child2)
+        individuals.swap(worst1, child2)
 //        println "overwritng w < c2"
       }
-//    if ( population[child1].getFitness() < population[child2].getFitness())
-//      population.swap(worst, child1)
-//    else
-//      population.swap(worst, child2)
     return completedOK
   }
 

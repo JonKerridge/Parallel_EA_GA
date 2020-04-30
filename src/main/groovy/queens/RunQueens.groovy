@@ -8,12 +8,13 @@ import groovyParallelPatterns.terminals.Emit
 import jcsp.lang.Channel
 import parallel_ea_ga.EAGA_Engine
 
-int populationPerNode = 12
-int queens = 1024
-int nodes = 15
+int populationPerNode = 4
+int queens = 128
+int nodes = 16
+int maxGenerations = 100000
 double crossoverProbability = 1.0
 double mutateProbability = 0.4
-int instances = 5
+int instances = 10
 boolean maximise = false
 String fileName = ""
 
@@ -47,7 +48,7 @@ def eaEngine = new EAGA_Engine<QueensPopulation>(
     input: chan1.in(),
     output: chan2.out(),
     printGeneration: false,
-    generationLimit: 200000,
+    generationLimit: maxGenerations,
     nodes: nodes
 )
 

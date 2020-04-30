@@ -36,18 +36,4 @@ class MaxOneIndividual implements IndividualInterface <MaxOneIndividual, MaxOneP
     genes[mutationPoint] = 1 - genes[mutationPoint]
   }
 
-  @Override
-  prePoint(MaxOneIndividual other, int point) {
-    for ( i in 0 ..< point) genes[i] = other.genes[i]
-  }
-
-  @Override
-  def postPoint(MaxOneIndividual other, int point) {
-    for ( i in point ..< geneLength) genes[i] = other.genes[i]
-  }
-
-  @Override
-  midPoints(MaxOneIndividual other, int point1, int point2) {
-    println "mot required in MaxOne"
-  }
 }

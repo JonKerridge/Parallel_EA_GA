@@ -2,12 +2,19 @@ package parallel_ea_ga
 
 interface IndividualInterfaceRecord<T1, T2> {
   // T1 is the individual class
-  // T2 is the population class
+  // T2 is the population of individuals class a modified copy of EAGA_Population
   // the methods assume that an individual has the desired internal structure
+  //
+  // BigDecimal fitness
+  // int size of representation ie number of genes
+  // Collection individualRepresentation
+  // List or Map of nodesVisited
+  //
+  // requires a public constructor
 
   updateNodesVisited(int nodeId)
 
-  createIndividual(T2 population, Random rng)     // creates a member of the population
+  createIndividual(T2 population, Random rng)     // creates an individual as this.
 
   evaluateFitness(T2 population)   // evaluates the fitness function for an individual
 
@@ -16,17 +23,5 @@ interface IndividualInterfaceRecord<T1, T2> {
 
   // undertakes a mutation operation on an individual
   mutate(Random rng)
-
-  // the following implement crossover;
-  // in combination 1 and 2-point crossovers can be undertaken
-
-  // crossover calling and other from 0 ..< point
-  prePoint(T1 other, int point)
-
-  // crossover calling and other from point .. end
-  postPoint(T1 other, int point)
-
-  // crossover calling and other from point1 ..< point2
-  midPoints(T1 other, int point1, int point2)
 
 }

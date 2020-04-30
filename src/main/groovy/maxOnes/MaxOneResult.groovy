@@ -14,9 +14,11 @@ class MaxOneResult extends DataClass{
     return completedOK
   }
 
-  //TODO change type of input Object to individual population
+  //TODO change type of input Object to individual individuals
   int collector(MaxOnePopulation data){
-      println "Result: $resultNumber = Time: ${data.timeTaken}; " +
+    BigDecimal fitness
+    fitness = data.individuals[data.first].getFitness()
+    println "Result: $resultNumber = Time: ${data.timeTaken}; Fitness = $fitness; " +
           "Generations: ${data.generations}\n " +
           "Seeds: ${data.seeds}"
     resultNumber += 1

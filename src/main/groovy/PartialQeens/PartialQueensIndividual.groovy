@@ -1,56 +1,48 @@
-package queens
+package PartialQeens
 
 import parallel_ea_ga.IndividualInterface
-import parallel_ea_ga.IndividualInterfaceRecord
+import queens.QueensPopulation
 
-class QueensIndividualRecord implements IndividualInterfaceRecord<QueensIndividualRecord, QueensPopulationRecord> {
+class PartialQueensIndividual implements IndividualInterface<PartialQueensIndividual, PartialQueensPopulation>{
   int N   // number of queens
   List <Integer> board = [] // board[0] is always null due to evaluateFitness function
   BigDecimal fitness
-//  List <Integer> nodesVisited = []
-  Map nodesVisited = [:]
-  QueensIndividualRecord(int queens){
+  int fixedQueens = 0
+  int firstMovableQueen
+  int mutateRepeats
+
+  PartialQueensIndividual(int queens, int fixedQueens){
     this.N = queens
     fitness = 1000.0
+    this.fixedQueens = fixedQueens
+    firstMovableQueen = fixedQueens + 1
   }
 
   void permute (Random rng) {
-    board = []
-    for ( int i in 1 .. N) board[i] = i
+    for ( int i in firstMovableQueen .. N) board[i] = i
 //        println "QC-permute: Client: $clientId board = $board"
-    for (int i in 1 .. N) {
+    for (int i in firstMovableQueen .. N) {
 //            println "QC-permute: Client: $clientId i: $i"
-      int j = rng.nextInt(N) + 1  //range is 1..N
+      int j = rng.nextInt(N - fixedQueens)  + firstMovableQueen  //range is firstMovableQueen..N
       board.swap(i,j)
     }
   }
 
-//  @Override
-//  updateNodesVisited(int nodeId) {
-//    if (!(nodesVisited.contains(nodeId)))
-//      nodesVisited << nodeId
-//  }
-
   @Override
-  updateNodesVisited(int nodeId) {
-    int count
-    if ((count = nodesVisited.get(nodeId, 0)) == 0)
-      nodesVisited.put(nodeId, 1)
-    else
-      nodesVisited.put(nodeId, count + 1)
-  }
-
-  @Override
-  createIndividual(QueensPopulationRecord population, Random rng) {
+  createIndividual(PartialQueensPopulation population, Random rng) {
+    board = []
+    mutateRepeats = population.mutateRepeats
+    // place the fixed queens
+    for ( i in 0 .. fixedQueens) board[i] = population.fixedLocations[i]
     permute(rng)
     evaluateFitness(population)
 //    println "Initial Board: $board, Fit: $fitness"
-//    println "Initial Fit: $fitness"
+//    println "Initial Fit: $fitness"-*-
   }
 
   @Override
-  def evaluateFitness(QueensPopulationRecord population) {
-    // individuals not used as no base data requirement
+  def evaluateFitness(PartialQueensPopulation population) {
+    // population not used as no repeated base data requirement
     List <Integer> leftDiagonal = []
     List <Integer> rightDiagonal = []
     double sum = 0.0D
@@ -87,10 +79,14 @@ class QueensIndividualRecord implements IndividualInterfaceRecord<QueensIndividu
 
   @Override
   def mutate(Random rng) {
-    int place1 = rng.nextInt(N) + 1  //1..queens
-    int place2 = rng.nextInt(N) + 1
-    while (place1 == place2) place2 = rng.nextInt(N) + 1
-    board.swap(place1, place2)
+    // must only swap movable queens
+    int repeats = rng.nextInt(mutateRepeats)+1
+    for ( r in 1 .. repeats) {
+      int place1 = rng.nextInt(N - fixedQueens) + firstMovableQueen  // firstMovableQueen..N
+      int place2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
+      while (place1 == place2) place2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
+      board.swap(place1, place2)
+    }
   }
 
 }

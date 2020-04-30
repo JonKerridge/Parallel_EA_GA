@@ -1,6 +1,5 @@
 package tsp
 
-import parallel_ea_ga.IndividualInterface
 import parallel_ea_ga.IndividualInterfaceRecord
 
 class TSPIndividualRecord implements IndividualInterfaceRecord<TSPIndividualRecord, TSPPopulationRecord> {
@@ -41,7 +40,8 @@ class TSPIndividualRecord implements IndividualInterfaceRecord<TSPIndividualReco
   }
 
 
-   BigDecimal getFitness() {
+  @Override
+  BigDecimal getFitness() {
     return distance
   }
 
@@ -53,18 +53,4 @@ class TSPIndividualRecord implements IndividualInterfaceRecord<TSPIndividualReco
     route.swap(place1, place2)
   }
 
-  @Override
-  def prePoint(TSPIndividualRecord other, int point) {
-    return null
-  }
-
-  @Override
-  def postPoint(TSPIndividualRecord other, int point) {
-    return null
-  }
-
-  @Override
-  def midPoints(TSPIndividualRecord other, int point1, int point2) {
-    return null
-  }
 }

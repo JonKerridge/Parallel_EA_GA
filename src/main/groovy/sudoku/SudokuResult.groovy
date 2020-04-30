@@ -14,17 +14,17 @@ class SudokuResult extends DataClass{
     return completedOK
   }
 
-  //TODO change type of input Object to individual population
+  //TODO change type of input Object to individual individuals
   int collector(SudukoPopulation data){
     List<List<Integer>> solution = []
-    solution = data.population[data.first].board.collect()
-    String s = "\nSolution : size is ${solution.size()}\n"
+    solution = data.individuals[data.first].board.collect()
+    String s = "\nSolution:\n"
     solution.each(l ->  s = s + "$l" +"\n")
     println "Result: $resultNumber = Solution Found is  ${data.solutionFound}; " +
         "Time: ${data.timeTaken}; " +
         "Generations: ${data.generations}; " +
         "$s " +
-        "Fitness is ${data.population[data.first].getFitness()}\n"+
+        "Fitness is ${data.individuals[data.first].getFitness()}\n"+
         "Seeds: ${data.seeds}\n"
     resultNumber += 1
     return completedOK

@@ -2,7 +2,7 @@ package tsp
 
 import parallel_ea_ga.IndividualInterface
 
-class TSPIndividual implements IndividualInterface<tsp.TSPIndividual, TSPPopulation>{
+class TSPIndividual implements IndividualInterface<TSPIndividual, TSPPopulation>{
   List <Integer> route = []
   BigDecimal distance = 0
   int cities = 0
@@ -32,7 +32,7 @@ class TSPIndividual implements IndividualInterface<tsp.TSPIndividual, TSPPopulat
     }
   }
 
-
+  @Override
    BigDecimal getFitness() {
     return distance
   }
@@ -45,18 +45,4 @@ class TSPIndividual implements IndividualInterface<tsp.TSPIndividual, TSPPopulat
     route.swap(place1, place2)
   }
 
-  @Override
-  def prePoint(TSPIndividual other, int point) {
-    return null
-  }
-
-  @Override
-  def postPoint(TSPIndividual other, int point) {
-    return null
-  }
-
-  @Override
-  def midPoints(TSPIndividual other, int point1, int point2) {
-    return null
-  }
 }

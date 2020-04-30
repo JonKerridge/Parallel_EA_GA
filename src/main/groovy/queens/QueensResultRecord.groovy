@@ -14,15 +14,15 @@ class QueensResultRecord extends DataClass{
     return completedOK
   }
 
-  //TODO change type of input Object to individual population
+  //TODO change type of input Object to individual individuals
   int collector(QueensPopulationRecord data){
     String seedString = ""
     data.seeds.each( seed -> seedString = seedString + "$seed, ")
     println "Result, $resultNumber, Found, ${data.solutionFound}, " +
         "Time, ${data.timeTaken}, " +
         "Generations, ${data.generations}, " +
-        "Fitness, ${data.population[data.first].getFitness()}, "+
-//        "${data.population[data.first].board} \n" +
+        "Fitness, ${data.individuals[data.first].getFitness()}, "+
+//        "${data.individuals[data.first].board} \n" +
         "Seeds, $seedString\n"
     resultNumber += 1
     return completedOK

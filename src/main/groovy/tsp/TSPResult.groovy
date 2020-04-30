@@ -14,13 +14,13 @@ class TSPResult extends DataClass{
     return completedOK
   }
 
-  //TODO change type of input Object to individual population
+  //TODO change type of input Object to individual individuals
   int collector(TSPPopulation data){
     println "Result: $resultNumber = Solution Found is  ${data.solutionFound}; " +
         "Time: ${data.timeTaken}; " +
         "Generations: ${data.generations}; " +
-//        "${data.population[data.first].route} \n" +
-//        "Fitness is ${data.population[data.first].getFitness()}\n"+
+//        "${data.individuals[data.first].route} \n" +
+//        "Fitness is ${data.individuals[data.first].getFitness()}\n"+
         "Seeds: ${data.seeds}\n"
     resultNumber += 1
     return completedOK

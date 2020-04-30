@@ -14,7 +14,7 @@ class EAGA_Result extends DataClass{
     return completedOK
   }
 
-  //TODO change type of input Object to individual population
+  //TODO change type of input Object to individual individuals
   int collect(Object data){
     // insert collect processing as required
     resultNumber += 1

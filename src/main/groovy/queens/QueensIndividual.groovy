@@ -33,7 +33,7 @@ class QueensIndividual implements IndividualInterface<QueensIndividual, QueensPo
 
   @Override
   def evaluateFitness(QueensPopulation population) {
-    // population not used as no base data requirement
+    // individuals not used as no base data requirement
     List <Integer> leftDiagonal = []
     List <Integer> rightDiagonal = []
     double sum = 0.0D
@@ -76,18 +76,4 @@ class QueensIndividual implements IndividualInterface<QueensIndividual, QueensPo
     board.swap(place1, place2)
   }
 
-  @Override
-  def prePoint(QueensIndividual other, int point) {
-    return null
-  }
-
-  @Override
-  def postPoint(QueensIndividual other, int point) {
-    return null
-  }
-
-  @Override
-  def midPoints(QueensIndividual other, int point1, int point2) {
-    return null
-  }
 }

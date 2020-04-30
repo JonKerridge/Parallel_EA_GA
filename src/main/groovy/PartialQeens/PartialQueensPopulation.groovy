@@ -1,17 +1,21 @@
-package queens
+package PartialQeens
 
 import groovyParallelPatterns.DataClass
 
-class QueensPopulationRecord extends DataClass{
+class PartialQueensPopulation extends DataClass{
 
   //TODO insert the required individual type
-  List <QueensIndividualRecord> individuals = []  //
+  List <PartialQueensIndividual> individuals = []  //
   boolean solutionFound
   List fileLines = [] // used to store inout file if used
 
-  int numberOfGenes       //length of an individual's chromosome
-  int populationPerNode   // must be greater than 3
+  int numberOfQueens
+  int populationPerNode   // must be greater than 4
   int nodes
+  int fixedQueens         // indicates the number of queens that have a fixed position
+  int firstMovableQueen
+  int mutateRepeats
+  List <Integer> fixedLocations = []  // holds indication of fixed position queens
   List <Long> seeds = null
   boolean maximise = true             // implies looking for a maximum valued goal
   Double crossoverProbability = null   // probability of a crossover operation 0.0 ..< 1.0
@@ -27,7 +31,7 @@ class QueensPopulationRecord extends DataClass{
   static String convergence = "convergence"         // determines if there is convergence to a solution
                                                     // returns a boolean true if converged false otherwise
                                                     // called in Root process
-  static String crossover = "queensCrossover"             // used to undertake the crossover operation
+  static String crossover = "queensPartialCrossover"             // used to undertake the crossover operation
                                                     // called from a Node process
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into individuals
@@ -52,7 +56,7 @@ class QueensPopulationRecord extends DataClass{
     else {
       // numberOfQueens, populationPerNode, nodes, maximise,
       // crossoverProbability, mutationProbability, [seeds], fileName
-      numberOfGenes = (int)d[0]
+      numberOfQueens = (int)d[0]
       populationPerNode = (int)d[1]
       nodes = (int)d[2]
       maximise = (boolean)d[3]
@@ -64,12 +68,14 @@ class QueensPopulationRecord extends DataClass{
       else
         // seeds will be generated in the node
         for ( i in 0 ..< nodes) seeds << null
-
       fileName = d[7]
+      fixedQueens = d[8]
+      mutateRepeats = d[9]
 
-      assert populationPerNode >= 3: "Population: populationPerNode must be 3 or more not $populationPerNode"
+      assert populationPerNode >= 4: "Population: populationPerNode must be 4 or more not $populationPerNode"
       assert nodes >= 1: "Population: nodes ($nodes) must be >= 1"
       assert mutationProbability != null: "Population: mutationProbability must be specified"
+      assert crossoverProbability != null: "Population: crossoverProbability must be specified"
 
       // set values of first and last index in individuals, depends on maximise
       lastIndex = (nodes * populationPerNode) - 1
@@ -80,6 +86,7 @@ class QueensPopulationRecord extends DataClass{
         first = 0
         last = lastIndex
       }
+      firstMovableQueen = fixedQueens + 1
       instance = instance + 1
       generations = 0
       individuals = []
@@ -88,7 +95,7 @@ class QueensPopulationRecord extends DataClass{
       // really would like to code
       // individuals << new I(params)  where I is the generic type
       //TODO make sure that an empty individual is returned
-        individuals << new QueensIndividualRecord(numberOfGenes) // MUST be changed
+        individuals << new PartialQueensIndividual(numberOfQueens, fixedQueens) // MUST be changed
       return normalContinuation
     }
   }
@@ -141,11 +148,21 @@ class QueensPopulationRecord extends DataClass{
 //  List <Integer> minBoard
 
   boolean convergence(){
-    if (individuals[first].getFitness() == 0.0){
-      println "Nodes Visited = ${individuals[first].nodesVisited}"
-      return true
-    } else
-    return false
+//    BigDecimal currentFitness = individuals[first].getFitness()
+//    if (currentFitness < minFitness){
+//      minCount = 0
+//      minFitness = currentFitness
+//      minBoard = []
+//      for (i in 1..< individuals[first].board.size())
+//        minBoard << individuals[first].board[i]  // omit initial board null
+//    }
+//    minCount += 1
+//    if (minCount > 1000){
+//      println " Best Board: $minBoard, Fitness: $minFitness"
+//      return true
+//    }
+//    else return false
+    return (individuals[first].getFitness() == 0.0)
   }
 
   def doCrossover (List sB, List mB, List mSb, List eB, int child){
@@ -215,16 +232,16 @@ class QueensPopulationRecord extends DataClass{
     return result
   }
 
-  int queensCrossover(int best,
-                int secondBest,
+  int queensPartialCrossover(int parent1,
+                int parent2,
                 int child1,
                 int child2,
                 Random rng) {
     // must ensure crossover points are not 0 as board[0] is not used
-    int c1 = rng.nextInt(numberOfGenes-3) + 2
-    int c2 = rng.nextInt(numberOfGenes-2) + 1
+    int c1 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
+    int c2 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
     //ensure c1 and c2 are different
-    while ( c1 == c2) c2 = rng.nextInt(numberOfGenes-2) + 1
+    while ( c1 == c2) c2 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
     if (c1 > c2) (c1,c2)=[c2,c1]  // ensure c1 < c2
     // for child1 NB route[0] and route[N] are fixed as 1
     //child1  1 ..< c1  = best 1..<c1
@@ -232,10 +249,10 @@ class QueensPopulationRecord extends DataClass{
     //child1 c2 ..< N = best c2 ..< N     where N is number of cities
     // s = start, m = middle, e = end of B best or sB secondBest
 
-    List <Integer> sB = extractParts(1, c1, individuals[best].board)
-    List <Integer> mB = extractParts(c1, c2, individuals[best].board)
-    List <Integer> mSb = extractParts(c1, c2, individuals[secondBest].board)
-    List <Integer> eB = extractParts(c2, numberOfGenes+1, individuals[best].board)
+    List <Integer> sB = extractParts(1, c1, individuals[parent1].board)
+    List <Integer> mB = extractParts(c1, c2, individuals[parent1].board)
+    List <Integer> mSb = extractParts(c1, c2, individuals[parent2].board)
+    List <Integer> eB = extractParts(c2, numberOfQueens+1, individuals[parent1].board)
     doCrossover(sB, mB, mSb, eB, child1)
 
     // now do it the other way round
@@ -243,32 +260,73 @@ class QueensPopulationRecord extends DataClass{
 //    mB = individuals[secondBest].route.getAt(c1 ..< c2)
 //    mSb = individuals[best].route.getAt(c1 ..< c2)
 //    eB = individuals[secondBest].route.getAt(c2 ..< numberOfQueens)
-    sB = extractParts(1, c1, individuals[secondBest].board)
-    mB = extractParts(c1, c2, individuals[secondBest].board)
-    mSb = extractParts(c1, c2, individuals[best].board)
-    eB = extractParts(c2, numberOfGenes+1, individuals[secondBest].board)
+    sB = extractParts(1, c1, individuals[parent2].board)
+    mB = extractParts(c1, c2, individuals[parent2].board)
+    mSb = extractParts(c1, c2, individuals[parent1].board)
+    eB = extractParts(c2, numberOfQueens+1, individuals[parent2].board)
     doCrossover(sB, mB, mSb, eB, child2)
     return completedOK
   }
 
-  int combineChildren(int best,
-                      int secondBest,
-                      int worst,
+//  int combineChildren(int parent1,
+//                      int parent2,
+//                      int worst1,
+//                      int worst2,
+//                      int child1,
+//                      int child2){
+//    // for example replace worst in individuals with best of child1 or child2
+//    // some versions could refer to best and secondBest
+//    if ( individuals[child1].getFitness() < individuals[child2].getFitness())
+//      individuals.swap(worst1, child1)
+//    else
+//      individuals.swap(worst1, child2)
+//    return completedOK
+//  }
+
+  int combineChildren(int parent1,
+                      int parent2,
+                      int worst1,
+                      int worst2,
                       int child1,
-                      int child2){
+                      int child2) {
+    BigDecimal child1Fit, child2Fit, worst2Fit
+    child1Fit = individuals[child1].getFitness()
+    child2Fit = individuals[child2].getFitness()
+    worst2Fit = individuals[worst2].getFitness()
     // for example replace worst in individuals with best of child1 or child2
     // some versions could refer to best and secondBest
-    if ( individuals[child1].getFitness() < individuals[child2].getFitness())
-      individuals.swap(worst, child1)
+    if (child1Fit < child2Fit)
+      if (child2Fit < worst2Fit) {
+//        println"overwriting both: w < c1, 2w < c2"
+        individuals.swap(worst1, child1)
+        individuals.swap(worst2, child2)
+      } else {
+        individuals.swap(worst1, child1)
+//        println "overwritng w < c1"
+      }
     else
-      individuals.swap(worst, child2)
+    if (child1Fit < worst2Fit) {
+      individuals.swap(worst1, child2)
+      individuals.swap(worst2, child1)
+//        println"overwriting both: w < c2, 2w < c1"
+    } else {
+      individuals.swap(worst1, child2)
+//        println "overwritng w < c2"
+    }
     return completedOK
   }
 
   // processes fileLines to create the problem specific data structures
   //TODO complete and add properties as necessary
   int processFile(){
-    return -100
+    fixedLocations = [null] // zero'th element is null
+    // only one line of numbers
+    fileLines.each { String line ->
+      List <String> values = line.tokenize(',')
+      for ( v in 0 ..< values.size())
+        fixedLocations << Integer.parseInt(values[v])
+    }
+    return completedOK
   }
 
 }

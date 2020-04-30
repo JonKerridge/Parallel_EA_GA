@@ -118,21 +118,6 @@ class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPo
 //    board.each {println "$it"}
   }
 
-
-  @Override
-  prePoint(SudokuIndividual other, int point) {
-    for ( i in 0 ..< point) board[i] = other.board[i].collect()
-  }
-
-  @Override
-  postPoint(SudokuIndividual other, int point) {
-    for ( i in point ..< 9) board[i] = other.board[i].collect()
-  }
-
-  @Override
-  midPoints(SudokuIndividual other, int point1, int point2) {
-  }
-
   String toString(){
     String s = "\nBoard\n"
     board.each(l ->  s = s + "$l" +"\n")

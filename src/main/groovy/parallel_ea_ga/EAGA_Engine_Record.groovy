@@ -8,22 +8,23 @@ import jcsp.lang.ChannelInput
 import jcsp.lang.ChannelOutput
 
 class EAGA_Engine_Record<T> implements CSProcess{
+  // T is a modified copy of EAGA_Population
 /*
 Traditional EA/GA algorithm             Parallel Version
                                               Root                                     Node(s)
                                        read in initialised data
 START                                                    -- send data reference -->
-Generate the initial population                                                         Create Individuals
+Generate the initial individuals                                                         Create Individuals
 Compute fitness                                                                         Evaluate Fitness
 REPEAT                                                       <-- done --
-    Selection                             sort population
+    Selection                             sort individuals
     Crossover                             if converged
     Mutation                              write data else    ---- go -->
     Compute fitness                                          ^                            Crossover
-UNTIL population has converged                               |                            Mutate
+UNTIL individuals has converged                               |                            Mutate
 STOP                                                         |                            Evaluate Fitness
                                                              |    <-- done --
-                                          sort population    |
+                                          sort individuals    |
                                           if converged       |
                                           write data  else --|
 
