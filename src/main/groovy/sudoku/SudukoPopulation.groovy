@@ -16,6 +16,7 @@ class SudukoPopulation extends DataClass{
   int numberOfGenes       //length of an individual's chromosome
   int populationPerNode   // must be greater than 3
   int nodes
+  int replaceCount
   List <Long> seeds = null
   boolean maximise = true             // implies looking for a maximum valued goal
   Double crossoverProbability = null   // probability of a crossover operation 0.0 ..< 1.0
@@ -35,6 +36,8 @@ class SudukoPopulation extends DataClass{
                                                     // called from a Node process
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into individuals
+  static String copyParentsToChildren = "copyParents" //used to copy parent individuals to children
+  // when crossovers not undertaken prior to mutation
 
   int first, last             // index of first and last entry in individuals, depends on maximise
   int lastIndex               // subscript of last entry in individuals,regardless
@@ -68,6 +71,8 @@ class SudukoPopulation extends DataClass{
         for ( i in 0 ..< nodes) seeds << null
 
       fileName = d[7]
+      replaceCount = d[8] as int
+      // some codes may need further property initialisations
 
       assert populationPerNode >= 4: "Population: populationPerNode must be 4 or more not $populationPerNode"
       assert nodes >= 1: "Population: nodes ($nodes) must be >= 1"
@@ -96,9 +101,14 @@ class SudukoPopulation extends DataClass{
     }
   }
 
-  int quickSort( ){
+  int quickSort( boolean sortType){
     // always sorts into ascending order
-    quickSortRun ( individuals, 0, lastIndex)
+    if (sortType)
+    // just include the active population
+      quickSortRun ( individuals, 0, lastIndex)
+    else
+    // used after child replacement, so include children
+      quickSortRun(individuals, 0, lastIndex +(nodes*2))
     return  completedOK
   }
 
@@ -152,20 +162,29 @@ class SudukoPopulation extends DataClass{
   // assuming ONE crossover point splitting an individual into before and after the point
   // individuals[child1] = individuals[best].before plus individuals[secondBest]after
   // individuals[child2] = individuals[secondBest].before plus individuals[best]after
+  // it only swaps complete boards; does not permit crossover when fitness of all the blocks is 81
   int crossover(int parent1,
                 int parent2,
                 int child1,
                 int child2,
                 Random rng) {
-    int xOverPoint = rng.nextInt(numberOfGenes)
-    for (i in 0 ..< xOverPoint)
-      individuals[child1].board[i] = individuals[parent1].board[i].collect()
-    for (i in xOverPoint ..< numberOfGenes)
-      individuals[child1].board[i] = individuals[parent2].board[i].collect()
-    for (i in 0 ..< xOverPoint)
-      individuals[child2].board[i] = individuals[parent2].board[i].collect()
-    for (i in xOverPoint ..< numberOfGenes)
-      individuals[child2].board[i] = individuals[parent1].board[i].collect()
+    if (individuals[parent1].getBlockFitness() == 81) {
+      individuals[parent1].specificMutate(parent1, child1, individuals[parent1].findWrongColumns(), rng)
+//      println "Blocks OK at $generations for $parent1: ${individuals[parent1].findWrongColumns()}"
+    }
+    else if (individuals[parent2].getBlockFitness() == 81) {
+      individuals[parent2].specificMutate(parent2, child2, individuals[parent2].findWrongColumns(), rng)
+//      println "Blocks OK at $generations for $parent2: ${individuals[parent2].findWrongColumns()}"
+    }
+    else { // an ordinary crossover operation
+      int xOverPoint = rng.nextInt(numberOfGenes)
+      individuals[parent1].specificMutation = false
+      individuals[parent2].specificMutation = false
+      for (i in 0..<xOverPoint) individuals[child1].board[i] = individuals[parent1].board[i].collect()
+      for (i in xOverPoint..<numberOfGenes) individuals[child1].board[i] = individuals[parent2].board[i].collect()
+      for (i in 0..<xOverPoint) individuals[child2].board[i] = individuals[parent2].board[i].collect()
+      for (i in xOverPoint..<numberOfGenes) individuals[child2].board[i] = individuals[parent1].board[i].collect()
+    }
     return completedOK
   }
 
@@ -221,7 +240,19 @@ class SudukoPopulation extends DataClass{
     return completedOK
   }
 
-
+  def copyParents(int parent1,
+                  int parent2,
+                  int child1,
+                  int child2) {
+    // copies the parents indicated into the child locations
+    // needed when crossover is not done but there could be a subsequent mutation
+    for ( b in 0 ..< numberOfGenes){
+      for ( i in 0 ..< numberOfGenes){
+        individuals[child1].board[b][i] = individuals[parent1].board[b][i]
+        individuals[child2].board[b][i] = individuals[parent2].board[b][i]
+      }
+    }
+  }
 
 
   // processes fileLines to create the problem specific data structures

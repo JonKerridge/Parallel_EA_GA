@@ -1,5 +1,7 @@
 package parallel_ea_ga
 
+import groovyParallelPatterns.UniversalRequest
+import groovyParallelPatterns.UniversalResponse
 import groovyParallelPatterns.UniversalSignal
 import groovyParallelPatterns.UniversalTerminator
 import jcsp.lang.CSProcess
@@ -69,23 +71,36 @@ class EAGA_Node<T> implements CSProcess {
       data = fromRoot.read()              // read signal from root
       // start of main evolution loop
       boolean modified
-      while (data instanceof UniversalSignal) {
-        modified = false
-        if (rng.nextDouble() < population.crossoverProbability) {
-          population.&"$population.crossover"(parent1, parent2, child1, child2, rng)
-          modified = true
+      while ((data instanceof UniversalSignal) ||( data instanceof UniversalRequest)) {
+        if (data instanceof UniversalSignal) {
+          // evaluating next generation
+          modified = false
+          if (rng.nextDouble() < population.crossoverProbability) {
+            population.&"$population.crossover"(parent1, parent2, child1, child2, rng)
+            modified = true
+          } else population.&"$population.copyParentsToChildren"(parent1, parent2, child1, child2)
+          if (rng.nextDouble() < population.mutationProbability) {
+            population.individuals[child1].mutate(rng)
+            population.individuals[child2].mutate(rng)
+            modified = true
+          }
+          if (modified) {
+            population.individuals[child1].evaluateFitness(population)
+            population.individuals[child2].evaluateFitness(population)
+            population.&"$population.combineChildren"(parent1, parent2, worst1, worst2, child1, child2)
+          }
+          toRoot.write(new UniversalSignal())
         }
-        if (rng.nextDouble() < population.mutationProbability){
-          population.individuals[child1].mutate( rng)
-          population.individuals[child2].mutate( rng)
-          modified = true
+        else {
+          // replacing children with new individuals
+          assert data instanceof UniversalRequest : "Node expected UniversalRequest but not read"
+//          println "$nodeId replacing child1 $child1"
+          population.individuals[child1].createIndividual(population, rng)
+//          println "$nodeId now replacing child2 $child2"
+          population.individuals[child2].createIndividual(population, rng)
+//          println "$nodeId replaced $child1 and $child2"
+          toRoot.write(new UniversalResponse())
         }
-        if (modified) {
-          population.individuals[child1].evaluateFitness(population)
-          population.individuals[child2].evaluateFitness(population)
-          population.&"$population.combineChildren"(parent1, parent2, worst1, worst2, child1, child2)
-        }
-        toRoot.write(new UniversalSignal())
         data = fromRoot.read()
       } // main loop
     } // processing data inputs

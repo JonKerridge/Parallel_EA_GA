@@ -21,10 +21,10 @@ REPEAT                                                       <-- done --
     Crossover                             if converged
     Mutation                              write data else    ---- go -->
     Compute fitness                                          ^                            Crossover
-UNTIL individuals has converged                               |                            Mutate
+UNTIL individuals has converged                              |                            Mutate
 STOP                                                         |                            Evaluate Fitness
                                                              |    <-- done --
-                                          sort individuals    |
+                                          sort individuals   |
                                           if converged       |
                                           write data  else --|
 

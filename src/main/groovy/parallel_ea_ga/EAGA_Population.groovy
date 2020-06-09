@@ -11,7 +11,8 @@ class EAGA_Population extends DataClass{
 
   int numberOfGenes       //length of an individual's chromosome
   int populationPerNode   // must be greater than 3
-  int nodes
+  int nodes               // number of node processes
+  int replaceCount        // number of mutations to be undertaken as part of mutate
   List <Long> seeds = null
   boolean maximise = true             // implies looking for a maximum valued goal
   Double crossoverProbability = null   // probability of a crossover operation 0.0 ..< 1.0
@@ -31,6 +32,8 @@ class EAGA_Population extends DataClass{
                                                     // called from a Node process
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into individuals
+  static String copyParentsToChildren = "copyParents" //used to copy parent individuals to children
+  // when crossovers not undertaken prior to mutation
 
   int first, last             // index of first and last entry in individuals, depends on maximise
   int lastIndex               // subscript of last entry in individuals,regardless
@@ -66,6 +69,8 @@ class EAGA_Population extends DataClass{
         for ( i in 0 ..< nodes) seeds << null
 
       fileName = d[7]
+      replaceCount = (int) d[8]
+      // todo some codes may need further property initialisations
 
       assert populationPerNode >= 4: "Population: populationPerNode must be 4 or more not $populationPerNode"
       assert nodes >= 1: "Population: nodes ($nodes) must be >= 1"
@@ -94,9 +99,14 @@ class EAGA_Population extends DataClass{
     }
   }
 
-  int quickSort( ){
+  int quickSort( boolean sortType){
     // always sorts into ascending order
-    quickSortRun ( individuals, 0, lastIndex)
+    if (sortType)
+    // just include the active population
+      quickSortRun ( individuals, 0, lastIndex)
+    else
+    // used after child replacement, so include children
+      quickSortRun(individuals, 0, lastIndex +(nodes*2))
     return  completedOK
   }
 
@@ -143,6 +153,7 @@ class EAGA_Population extends DataClass{
     // this example is for a solution to the MaxOnes problems
     // where the fitness is best when all Genes are 1
     // getFitness returns a BigDecimal
+    //todo this will need to be changed
     return (individuals[first].getFitness()  == numberOfGenes)
   }
 
@@ -157,11 +168,9 @@ class EAGA_Population extends DataClass{
                 int child1,
                 int child2,
                 Random rng) {
-    int xOverPoint = rng.nextInt(numberOfGenes)
-    individuals[child1].prePoint(individuals[best], xOverPoint)
-    individuals[child2].prePoint(individuals[secondBest], xOverPoint)
-    individuals[child2].postPoint(individuals[best], xOverPoint)
-    individuals[child1].postPoint(individuals[secondBest], xOverPoint)
+    // todo write code required to undertake crossover of parents to children
+    println "crossover method -  not implemented"
+    System.exit(0)
     return completedOK
   }
 
@@ -172,17 +181,29 @@ class EAGA_Population extends DataClass{
                       int child1,
                       int child2){
     // for example replace worst in individuals with best of child1 or child2
-    // some versions could refer to parent1, parent2 and worst2
-    if ( individuals[child1].getFitness() > individuals[child2].getFitness())
-      individuals.swap(worst1, child1)
-    else
-      individuals.swap(worst1, child2)
+    // some versions could refer to replacing worst2
+    // todo write code required to children
+    println "combineChildren method -  not implemented"
+    System.exit(0)
     return completedOK
   }
 
-  // processes fileLines to create the problem specific data structures
+  def copyParents(int parent1,
+                  int parent2,
+                  int child1,
+                  int child2) {
+    // copies the parents indicated into the child locations
+    // needed when crossover is not done but there could be a subsequent mutation
+    // todo write code required to copy parents to children
+    println "copyParentsToChildren method - copyParents not implemented"
+    System.exit(0)
+  }
+
+    // processes fileLines to create the problem specific data structures
   //TODO complete and add properties as necessary
   int processFile(){
+    println "processFile method - not implemented"
+    System.exit(0)
     return -100
   }
 

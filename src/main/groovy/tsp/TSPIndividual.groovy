@@ -13,6 +13,7 @@ class TSPIndividual implements IndividualInterface<TSPIndividual, TSPPopulation>
 
   @Override
   createIndividual(TSPPopulation population, Random rng) {
+    route = []
     route[0] = 1          // start and end at city 1
     route[cities] = 1
     int place = rng.nextInt(cities) + 1    // 1 .. cities
@@ -39,8 +40,8 @@ class TSPIndividual implements IndividualInterface<TSPIndividual, TSPPopulation>
 
   @Override
   mutate(Random rng) {
-    int place1 = rng.nextInt(cities - 2) + 1  //1..cities-1
-    int place2 = rng.nextInt(cities - 2) + 1
+    int place1 = rng.nextInt(cities - 1) + 1  //1..cities-1
+    int place2 = rng.nextInt(cities - 1) + 1
     while (place1 == place2) place2 = rng.nextInt(cities - 1) + 1
     route.swap(place1, place2)
   }

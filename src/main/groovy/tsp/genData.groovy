@@ -1,6 +1,6 @@
 package tsp
 
-String nodeFile = "./Nodexy.csv"
+String nodeFile = "./10cities.csv"
 
 List < List<Integer> > nodeData = []
 nodeData [0] = [0, 0, 0]
@@ -35,7 +35,7 @@ for ( i in 2..< nodes) {
   triangular[i].putAt(0, 0)
 }
 
-String outFileName = "./first.tsp"
+String outFileName = "./10cities.tsp"
 def outFile = new File(outFileName)
 if (outFile.exists()) outFile.delete()
 def printWriter = outFile.newPrintWriter()

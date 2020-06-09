@@ -13,13 +13,14 @@ import sudoku.SudukoPopulation
 int populationPerNode = 4
 int cities = 42
 int nodes = 16
-double crossoverProbability = 1.0
-double mutateProbability = 1.0
-int instances = 100
-int generations = 100000
+double crossoverProbability = 0.75
+double mutateProbability = 0.9
+int instances = 10
+int generations = 10000
 boolean maximise = false
 String fileName = "./dantzig42.tsp"
-
+int replaceCount = 1000
+List <Long> seeds = []
 //List <Long> seeds = [105519345081900, 105519345118200, 105519345149700,
 //                     105519345179200, 105519345216000, 105519345241700,
 //                     105519345170900, 105519345226700]
@@ -31,7 +32,8 @@ def eDetails = new DataDetails(
     dCreateMethod: TSPPopulation.createInstance,
     dCreateData: [cities, populationPerNode,
                   nodes, maximise, crossoverProbability,
-                  mutateProbability, null, fileName]
+                  mutateProbability, null, fileName,
+                  replaceCount]
 )
 def rDetails = new ResultDetails (
     rName: TSPResult.getName(),
@@ -63,12 +65,16 @@ new PAR([emitter, eaEngine, collector]).run()
 
 long endTime = System.currentTimeMillis()
 
-println " TSP, $nodes, " +
-    "populationPerNode, $populationPerNode, " +
-    "Cities, $cities, " +
-    "crossover, $crossoverProbability, " +
-    "mutate, $mutateProbability, " +
-    "instances, $instances, " +
-    "total time, ${endTime-startTime}"
+println "TSP Nodes $nodes " +
+    "Population $populationPerNode " +
+    " Cities $cities " +
+    "Crossover $crossoverProbability " +
+    "Mutate $mutateProbability " +
+    "Instances $instances " +
+    "MaxGeneration $generations " +
+    "Replace $replaceCount " +
+    "Time ${endTime-startTime}"
+
+
 
 

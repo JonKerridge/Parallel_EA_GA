@@ -11,6 +11,8 @@ class MaxOnePopulation extends DataClass{
   int numberOfGenes       //length of an individual's chromosome
   int populationPerNode   // must be greater than 3
   int nodes
+  int replaceCount        // number of generations before all children replaced
+
   List <Long> seeds = null
   boolean maximise = true             // implies looking for a maximum valued goal
   Double crossoverProbability = null   // probability of a crossover operation 0.0 ..< 1.0
@@ -23,6 +25,8 @@ class MaxOnePopulation extends DataClass{
   static String crossover = "crossover"           // used to undertake the crossover operation
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into individuals
+  static String copyParentsToChildren = "copyParents" //used to copy parent individuals to children
+  // when crossovers not undertaken prior to mutation
 
   int first, last             // index of first and last entry in individuals, depends on maximise
   int lastIndex               // subscript of last entry in individuals,regardless
@@ -59,6 +63,7 @@ class MaxOnePopulation extends DataClass{
         for ( i in 0 ..< nodes) seeds << null
       }
       fileName = d[7]
+      replaceCount = d[8] as int
 
       assert populationPerNode >= 3: "Population: populationPerNode must be 3 or more not $populationPerNode"
       assert nodes >= 1: "Population: nodes ($nodes) must be >= 1"
@@ -85,11 +90,15 @@ class MaxOnePopulation extends DataClass{
     }
   }
 
-  int quickSort( ){
+  int quickSort( boolean sortType){
     // always sorts into ascending order
-    quickSortRun ( individuals, 0, lastIndex)
+    if (sortType)
+    // just include the active population
+      quickSortRun ( individuals, 0, lastIndex)
+    else
+    // used after child replacement, so include children
+      quickSortRun(individuals, 0, lastIndex +(nodes*2))
     return  completedOK
-
   }
 
   int partition(List m, int start, int end){
@@ -173,6 +182,18 @@ class MaxOnePopulation extends DataClass{
     else
       individuals.swap(worst1, child2)
     return completedOK
+  }
+
+  def copyParents(int parent1,
+                  int parent2,
+                  int child1,
+                  int child2) {
+    // copies the parents indicated into the child locations
+    // needed when crossover is not done but there could be a subsequent mutation
+    for ( i in 0 ..< numberOfGenes){
+      individuals[child1].genes[i] = individuals[parent1].genes[i]
+      individuals[child2].genes[i] = individuals[parent2].genes[i]
+    }
   }
 
   // processes fileLines to create the problem specific data structures

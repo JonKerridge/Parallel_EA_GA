@@ -1,6 +1,9 @@
 package parallel_ea_ga
 
 import groovyJCSP.ChannelOutputList
+import groovyParallelPatterns.DataClassInterface
+import groovyParallelPatterns.UniversalRequest
+import groovyParallelPatterns.UniversalResponse
 import groovyParallelPatterns.UniversalSignal
 import groovyParallelPatterns.UniversalTerminator
 import jcsp.lang.CSProcess
@@ -14,11 +17,12 @@ class EAGA_Root<T> implements CSProcess{
   ChannelOutputList toNodes
   ChannelInput fromNodes
   boolean printGeneration = false
-  int generationLimit = 250000
+  int generationLimit = 100000
 
   @Override
   void run() {
     int nodes = toNodes.size()
+    int loopCount = 0
     Object data
     data = input.read()
     long previousGenerationTime, generationTime
@@ -38,7 +42,8 @@ class EAGA_Root<T> implements CSProcess{
       // wait for response from nodes indicating the individuals has been created
       for (i in 0 ..< nodes) fromNodes.read()
       // now sort the individuals
-      population.&"$population.sortMethod"()  // should check return value
+      assert population.&"$population.sortMethod"(true)  == DataClassInterface.completedOK :
+        "initial population sort failed"
       if (printGeneration) {
         generationTime = System.currentTimeMillis()
         println "Generation - ${population.generations} : " +
@@ -46,23 +51,48 @@ class EAGA_Root<T> implements CSProcess{
             "InitTime= ${generationTime - previousGenerationTime}"
         previousGenerationTime = generationTime
       }
+      loopCount = 0
       // now start evolution loop testing for convergence or too many generations
       while (!(population.&"$population.convergence"() ) && ( population.generations <= generationLimit)){
         population.generations += 1
+        loopCount += 1
+        if (loopCount == population.replaceCount){
+          loopCount = 0
+          // send replace children signal to nodes
+//          println "Root: sending signal to nodes to create new children"
+          for (i in 0 ..< nodes) toNodes[i].write(new UniversalRequest())
+//          println "Root: nodes should be creating new children"
+          // wait for all nodes to have completed by reading UniversalResponses
+          for (i in 0 ..< nodes) fromNodes.read()
+//            assert fromNodes.read() instanceof UniversalResponse :
+//              "root expecting Universal Response after total child replacement"
+
+          // now sort the individuals
+//          println "root now sorting replacements"
+          assert population.&"$population.sortMethod"(false)  == DataClassInterface.completedOK :
+              "sort after child replacement failed"
+//          population.&"$population.sortMethod"(false)
+        } // end of loopCount test
         // send loop again signal to nodes
         for (i in 0 ..< nodes) toNodes[i].write(new UniversalSignal())
-        // wait for all nodes to have completed
+        // wait for all nodes to have completed by reading UniversalSignals
         for (i in 0 ..< nodes) fromNodes.read()
+//          assert fromNodes.read() instanceof UniversalSignal :
+//              "root expecting Universal Signal after generation loop"
+
         // now sort the individuals
-        population.&"$population.sortMethod"()  // should check return value
+        assert population.&"$population.sortMethod"(true)  == DataClassInterface.completedOK :
+            "sort at end of generation loop failed"
+//        population.&"$population.sortMethod"(true)
         if (printGeneration) {
           generationTime = System.currentTimeMillis()
           println "Generation - ${population.generations} : " +
               "Fitness = ${population.individuals[population.first].getFitness()}, " +
-              "Cycle Time= ${generationTime - previousGenerationTime}"
+              "Cycle Time = ${generationTime - previousGenerationTime} " +
+              "Loop count = $loopCount"
           previousGenerationTime = generationTime
-        }
-      }
+        } // end of print generation
+      } //end of main while loop
       population.solutionFound = (population.generations <= generationLimit)
       long endTime = System.currentTimeMillis()
       population.timeTaken = endTime - startTime

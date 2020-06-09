@@ -4,10 +4,9 @@ import parallel_ea_ga.IndividualInterface
 
 class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPopulation> {
   BigDecimal fitness = -1
-  List nodesVisited = []
   List<List<Integer>> board
   int geneLength = 9  // modify this throughout once working
-
+  boolean specificMutation
   SudukoPopulation population
 
   SudokuIndividual(int geneLength){
@@ -17,6 +16,7 @@ class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPo
   @Override
   createIndividual(SudukoPopulation population, Random rng) {
     this.population = population
+    specificMutation = false
     board = []
     int row
     row = 0
@@ -85,6 +85,23 @@ class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPo
     return values
   }
 
+  BigDecimal getBlockFitness(){
+    BigDecimal blockFitness = 0
+    for ( r in 0 ..<3){
+      for (c in 0 ..< 3){
+        blockFitness = blockFitness + countDifferentDigits(createBlocks(r,c))
+      }
+    }
+    return blockFitness
+  }
+
+  List <Integer> findWrongColumns(){
+    List<Integer> wrongColumns = []
+    for ( c in 0 ..< 9)
+      if (countDifferentDigits(createColumns(c)) != 9) wrongColumns << c
+    return wrongColumns
+  }
+
   @Override
   evaluateFitness(SudukoPopulation population) {
      fitness = 0
@@ -104,22 +121,69 @@ class SudokuIndividual implements IndividualInterface<SudokuIndividual, SudukoPo
 
   @Override
   def mutate(Random rng) {
-    int row = rng.nextInt(9)
-    List elements = []
-    for ( i in 0 ..< 9) if (population.fixed[row][i]) elements << i
-    int element1 = rng.nextInt(elements.size())
-    int element2 = rng.nextInt(elements.size())
-    while (element2 == element1) element2 = rng.nextInt(elements.size())
+    if (!specificMutation) {
+      int row = rng.nextInt(9)
+      List elements = []
+      for (i in 0..<9) if (population.fixed[row][i]) elements << i
+      int element1 = rng.nextInt(elements.size())
+      int element2 = rng.nextInt(elements.size())
+      while (element2 == element1) element2 = rng.nextInt(elements.size())
 //    println "Before Board:"
 //    board.each {println "$it"}
-    board[row].swap(elements[element1], elements[element2])
+      board[row].swap(elements[element1], elements[element2])
 //    println " $row[${elements[element1]}, ${elements[element2]}] "
 //    println "After Mutate:"
 //    board.each {println "$it"}
+    }
+  }
+
+  def processColumns ( List<Integer> columns,
+                       List <Integer> testColumns,
+                       int parent,
+                       int child,
+                       Random rng){
+    for ( b in 0 ..< population.numberOfGenes)
+      for ( i in 0 ..< population.numberOfGenes)
+        population.individuals[child].board[b][i] = population.individuals[parent].board[b][i]
+    population.individuals[child].specificMutation = true
+    if (columns.intersect(testColumns) != []){
+      // first three columns have a problem
+      int row
+      row = rng.nextInt(9)
+      List <Integer> elements
+      elements = []
+      testColumns.each { i -> if (population.fixed[row][i]) elements << i }
+      while (elements.size() < 2){
+        row = (row + 1) % 9
+        elements = []
+        testColumns.each { i -> if (population.fixed[row][i]) elements << i }
+      }
+      // have a row with at least variable entries in block
+      if (elements.size() == 2) // only two elements so use them
+        population.individuals[child].board[row].swap(elements[0], elements[1])
+      else{
+        int element1 = rng.nextInt(3)
+        int element2 = rng.nextInt(3)
+        while (element2 == element1) element2 = rng.nextInt(elements.size())
+        population.individuals[child].board[row].swap(elements[element1], elements[element2])
+      } // inner elements if
+    } // end of outer intersection if
+
+  } // end of process columns
+
+  def specificMutate(int parent,
+                     int child,
+                     List <Integer> columns,
+                     Random rng){
+//    println "SM [$parent, $child] at $columns\n" +
+//      "${population.individuals[parent].toString()}"
+    processColumns(columns,[0,1,2], parent, child, rng)
+    processColumns(columns,[3,4,5], parent, child, rng)
+    processColumns(columns,[6,7,8], parent, child, rng)
   }
 
   String toString(){
-    String s = "\nBoard\n"
+    String s = "Board $fitness\n"
     board.each(l ->  s = s + "$l" +"\n")
     return s
   }

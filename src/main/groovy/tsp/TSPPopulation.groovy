@@ -14,6 +14,7 @@ class TSPPopulation extends DataClass{
   int numberOfGenes       //length of an individual's chromosome
   int populationPerNode   // must be greater than 3
   int nodes
+  int replaceCount
   List <Long> seeds = null
   boolean maximise = true             // implies looking for a maximum valued goal
   Double crossoverProbability = null   // probability of a crossover operation 0.0 ..< 1.0
@@ -26,13 +27,16 @@ class TSPPopulation extends DataClass{
   static String createInstance = "create"           // creates each instance object but not the individuals
                                                     // returns normalCompletion or normalTermination
   static String sortMethod = "quickSort"            // sorts individuals into ascending order called in Root
-  static String convergence = "convergence"         // determines if there is convergence to a solution
-                                                    // returns a boolean true if converged false otherwise
-                                                    // called in Root process
-  static String crossover = "crossoverDantzig42"    // used to undertake the crossover operation
-                                                    // called from a Node process
+  static String convergence = "convergence"      // determines if there is convergence to a solution
+                                                 // returns a boolean true if converged false otherwise
+                                                 // called in Root process
+
+  static String crossover = "crossover"    // used to undertake the crossover operation
+                                           // called from a Node process
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into individuals
+  static String copyParentsToChildren = "copyParents" //used to copy parent individuals to children
+  // when crossovers not undertaken prior to mutation
 
   int first, last             // index of first and last entry in individuals, depends on maximise
   int lastIndex               // subscript of last entry in individuals,regardless
@@ -68,6 +72,7 @@ class TSPPopulation extends DataClass{
         for ( i in 0 ..< nodes) seeds << null
 
       fileName = d[7]
+      replaceCount = d[8] as int
 
       assert populationPerNode >= 3: "Population: populationPerNode must be 3 or more not $populationPerNode"
       assert nodes >= 1: "Population: nodes ($nodes) must be >= 1"
@@ -95,11 +100,17 @@ class TSPPopulation extends DataClass{
     }
   }
 
-  int quickSort( ){
+  int quickSort( boolean sortType){
     // always sorts into ascending order
-    quickSortRun ( individuals, 0, lastIndex)
+    if (sortType)
+    // just include the active population
+      quickSortRun ( individuals, 0, lastIndex)
+    else
+    // used after child replacement, so include children
+      quickSortRun(individuals, 0, lastIndex +(nodes*2))
     return  completedOK
   }
+
 
   int partition(List m, int start, int end){
     BigDecimal pivotValue
@@ -141,6 +152,12 @@ class TSPPopulation extends DataClass{
   BigDecimal minFitness = 1000000
   int minCount
   List<Integer> minRoute
+//  BigDecimal convergenceLimit = 27      // for first.tsp data set
+//  int countLimit = 50
+//  BigDecimal convergenceLimit = 43      // for 10cities.tsp data set
+//  int countLimit = 50
+  BigDecimal convergenceLimit = 800      // for dantzig42.tsp data set
+  int countLimit = 500    // generations when fitness does not change and convergence reached
   boolean convergence(){
     BigDecimal currentFitness = individuals[first].getFitness()
     if (currentFitness < minFitness) {
@@ -151,10 +168,11 @@ class TSPPopulation extends DataClass{
         minRoute << individuals[first].route[i]
     }
     minCount += 1
-    if (minFitness > 800) return false
-//    println"Convergence: $minFitness -> $first:= ${individuals[first].getFitness()}; $last:= ${individuals[last].getFitness()}"
-    if ( minCount > 1000){
-      println "Solution = Fitness: $minFitness, Minimum Route: $minRoute "
+    if (minFitness > convergenceLimit) return false
+//    println"Convergence: $minFitness -> $minCount"
+    if ( minCount > countLimit){
+//      println "Solution Found-> Fitness: $minFitness, Minimum Route: $minRoute "
+      minFitness = 1000000
       return true
     } else return false
   }
@@ -226,17 +244,18 @@ class TSPPopulation extends DataClass{
     return result
   }
 
-  int crossoverDantzig42 (int parent1,
-                          int parent2,
-                          int child1,
-                          int child2,
-                          Random rng){
-    // must ensure crossover points are not 0 and 42, which are both fixed at 1
+  int crossover (int parent1,
+                 int parent2,
+                 int child1,
+                 int child2,
+                 Random rng){
+    // must ensure crossover points are not 0 and cities, which are both fixed at 1
     int c1 = rng.nextInt(numberOfGenes - 1) + 1
     int c2 = rng.nextInt(numberOfGenes - 1) + 1
     //ensure c1 and c2 are different
     while ( c1 == c2) c2 = rng.nextInt(numberOfGenes - 1) + 1
     if (c1 > c2) (c1,c2)=[c2,c1]  // ensure c1 < c2
+//    println "crossover $c1, $c2"
     // for child1 NB route[0] and route[N] are fixed as 1
     //child1  1 ..< c1  = best 1..<c1
     //child1 c1 ..< c2   = secondBest c1 ..< c2
@@ -293,6 +312,19 @@ class TSPPopulation extends DataClass{
 //        println "overwritng w < c2"
       }
     return completedOK
+  }
+
+  def copyParents(int parent1,
+                  int parent2,
+                  int child1,
+                  int child2) {
+    // copies the parents indicated into the child locations
+    // needed when crossover is not done but there could be a subsequent mutation
+    int cities = individuals[parent1].cities
+    for ( i in 0 .. cities){
+      individuals[child1].route[i] = individuals[parent1].route[i]
+      individuals[child2].route[i] = individuals[parent2].route[i]
+    }
   }
 
   // processes fileLines to create the problem specific data structures

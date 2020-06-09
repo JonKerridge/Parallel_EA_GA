@@ -10,7 +10,7 @@ interface IndividualInterface <T1, T2> {
   // int size of representation ie number of genes
   // Collection individualRepresentation
   //
-  // requires a public constructor
+  // todo requires a public constructor
 
   createIndividual(T2 population, Random rng)     // creates an individual as this.
 
