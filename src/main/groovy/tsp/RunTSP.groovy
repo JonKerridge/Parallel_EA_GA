@@ -1,10 +1,10 @@
 package tsp
 
-import groovyJCSP.PAR
-import groovyParallelPatterns.DataDetails
-import groovyParallelPatterns.ResultDetails
-import groovyParallelPatterns.terminals.Collect
-import groovyParallelPatterns.terminals.Emit
+import groovy_jcsp.PAR
+import groovy_parallel_patterns.DataDetails
+import groovy_parallel_patterns.ResultDetails
+import groovy_parallel_patterns.terminals.Collect
+import groovy_parallel_patterns.terminals.Emit
 import jcsp.lang.Channel
 import parallel_ea_ga.EAGA_Engine
 import sudoku.SudokuResult

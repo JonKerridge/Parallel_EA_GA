@@ -31,5 +31,30 @@
       <option name="name" value="BintrayJCenter" />
       <option name="url" value="https://jcenter.bintray.com/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven2" />
+      <option name="name" value="maven2" />
+      <option name="url" value="https://dl.bintray.com/jonkerridge/gpp" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="GitHub2" />
+      <option name="name" value="GitHub2" />
+      <option name="url" value="https://maven.pkg.github.com/CSPforJAVA/jcsp" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="GitHub" />
+      <option name="name" value="GitHub" />
+      <option name="url" value="https://maven.pkg.github.com/JonKerridge/groovyJCSP" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="GitHub3" />
+      <option name="name" value="GitHub3" />
+      <option name="url" value="https://maven.pkg.github.com/JonKerridge/GPP_Library" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="GitHub4" />
+      <option name="name" value="GitHub4" />
+      <option name="url" value="https://maven.pkg.github.com/JonKerridge/GPP_Builder" />
+    </remote-repository>
   </component>
 </project>

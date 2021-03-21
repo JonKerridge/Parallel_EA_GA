@@ -2,13 +2,16 @@ package FixedQeens
 
 import parallel_ea_ga.IndividualInterface
 
-class QueensIndividual implements IndividualInterface<QueensIndividual, FixedQeens.QueensPopulation>{
+// based on http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.720&rep=rep1&type=pdf
+
+
+class QueensIndividual implements IndividualInterface<QueensIndividual, QueensPopulation>{
   int N   // number of queens
   List <Integer> board = [] // board[0] is always null due to evaluateFitness function
   BigDecimal fitness
   int fixedQueens = 0
   int firstMovableQueen
-//  int mutateRepeats  // not used in this version
+  int mutateRepeats  = 4
 
   QueensIndividual(int queens, int fixedQueens){
     this.N = queens
@@ -28,7 +31,7 @@ class QueensIndividual implements IndividualInterface<QueensIndividual, FixedQee
   }
 
   @Override
-  createIndividual(FixedQeens.QueensPopulation population, Random rng) {
+  createIndividual(QueensPopulation population, Random rng) {
     board = []
 //    mutateRepeats = population.mutateRepeats // not used in mutate at moment
     // place the fixed queens
@@ -40,8 +43,9 @@ class QueensIndividual implements IndividualInterface<QueensIndividual, FixedQee
   }
 
   @Override
-  def evaluateFitness(FixedQeens.QueensPopulation population) {
+  def evaluateFitness(QueensPopulation population) {
     // population not used as no repeated base data requirement
+    // lops start at 1 because board[0] is empty
     List <Integer> leftDiagonal = []
     List <Integer> rightDiagonal = []
     double sum = 0.0D
@@ -76,26 +80,26 @@ class QueensIndividual implements IndividualInterface<QueensIndividual, FixedQee
     return fitness
   }
 
-//  @Override
-//  def mutate(Random rng) {
-//    // must only swap movable queens
-//    int repeats = rng.nextInt(mutateRepeats)+1
-//    for ( r in 1 .. repeats) {
-//      int place1 = rng.nextInt(N - fixedQueens) + firstMovableQueen  // firstMovableQueen..N
-//      int place2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
-//      while (place1 == place2) place2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
-//      board.swap(place1, place2)
-//    }
-//  }
-
-
   @Override
   def mutate(Random rng) {
     // must only swap movable queens
-    int n1 = rng.nextInt(N - fixedQueens)  + firstMovableQueen
-    int n2 = rng.nextInt(N - fixedQueens)  + firstMovableQueen
-    while (n2 == n1) n2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
-    board.swap(n1, n2)
+    int repeats = rng.nextInt(mutateRepeats)+1
+    for ( r in 1 .. repeats) {
+      int place1 = rng.nextInt(N - fixedQueens) + firstMovableQueen  // firstMovableQueen..N
+      int place2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
+      while (place1 == place2) place2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
+      board.swap(place1, place2)
+    }
   }
+
+
+//  @Override
+//  def mutate(Random rng) {
+//    // must only swap movable queens
+//    int n1 = rng.nextInt(N - fixedQueens) + firstMovableQueen
+//    int n2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
+//    while (n2 == n1) n2 = rng.nextInt(N - fixedQueens) + firstMovableQueen
+//    board.swap(n1, n2)
+//  }
 
 }

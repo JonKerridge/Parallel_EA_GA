@@ -1,7 +1,7 @@
 package parallel_ea_ga
 
-import groovyJCSP.ChannelOutputList
-import groovyJCSP.PAR
+import groovy_jcsp.ChannelOutputList
+import groovy_jcsp.PAR
 import jcsp.lang.CSProcess
 import jcsp.lang.ChannelInput
 import jcsp.lang.ChannelOutput
@@ -14,14 +14,14 @@ Traditional EA/GA algorithm             Parallel Version
                                               Root                                     Node(s)
                                        read in initialised data
 START                                                    -- send data reference -->
-Generate the initial individuals                                                         Create Individuals
-Compute fitness                                                                         Evaluate Fitness
+Generate the initial population                                                         Create Individuals
+Evaluate fitness                                                                        Evaluate Fitness
 REPEAT                                                       <-- done --
     Selection                             sort individuals
     Crossover                             if converged
     Mutation                              write data else    ---- go -->
     Compute fitness                                          ^                            Crossover
-UNTIL individuals has converged                              |                            Mutate
+UNTIL population converges                                   |                            Mutate
 STOP                                                         |                            Evaluate Fitness
                                                              |    <-- done --
                                           sort individuals   |

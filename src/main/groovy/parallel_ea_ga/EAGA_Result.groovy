@@ -1,6 +1,6 @@
 package parallel_ea_ga
 
-import groovyParallelPatterns.DataClass
+import groovy_parallel_patterns.DataClass
 
 class EAGA_Result extends DataClass{
 

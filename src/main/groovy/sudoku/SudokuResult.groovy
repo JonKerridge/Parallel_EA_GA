@@ -1,6 +1,6 @@
 package sudoku
 
-import groovyParallelPatterns.DataClass
+import groovy_parallel_patterns.DataClass
 
 class SudokuResult extends DataClass{
 

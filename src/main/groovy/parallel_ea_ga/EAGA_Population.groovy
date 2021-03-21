@@ -1,7 +1,9 @@
 package parallel_ea_ga
 
-import groovyParallelPatterns.DataClass
+import groovy.transform.CompileStatic
+import groovy_parallel_patterns.DataClass
 
+//@CompileStatic
 class EAGA_Population extends DataClass{
 
   //TODO insert the required individual type
@@ -12,7 +14,8 @@ class EAGA_Population extends DataClass{
   int numberOfGenes       //length of an individual's chromosome
   int populationPerNode   // must be greater than 3
   int nodes               // number of node processes
-  int replaceCount        // number of mutations to be undertaken as part of mutate
+  int replaceCount        // number of generations before new individuals created and
+                          // possibly added to the population
   List <Long> seeds = null
   boolean maximise = true             // implies looking for a maximum valued goal
   Double crossoverProbability = null   // probability of a crossover operation 0.0 ..< 1.0

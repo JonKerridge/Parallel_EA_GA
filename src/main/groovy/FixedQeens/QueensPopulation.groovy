@@ -1,6 +1,6 @@
 package FixedQeens
 
-import groovyParallelPatterns.DataClass
+import groovy_parallel_patterns.DataClass
 
 class QueensPopulation extends DataClass{
 
@@ -15,6 +15,7 @@ class QueensPopulation extends DataClass{
   int fixedQueens         // indicates the number of queens that have a fixed position
   int firstMovableQueen   // index of first queen that can be moved
   int replaceCount        // number of generations before all children replaced
+  int points              // number of points in crossover must be even 2,4,6,8 ....
 
   List <Integer> fixedLocations = []  // holds indication of fixed position queens
   List <Long> seeds = null
@@ -32,9 +33,10 @@ class QueensPopulation extends DataClass{
   static String convergence = "convergence"         // determines if there is convergence to a solution
                                                     // returns a boolean true if converged false otherwise
                                                     // called in Root process
-  static String crossover = "queens2PointCrossover" // used to undertake the crossover operation
+//  static String crossover = "queens2PointCrossover" // used to undertake the crossover operation
                                                     // called from a Node process
 //  static String crossover = "queens4PointCrossover"
+  static String crossover = "multiPointCrossover"
   static String combineChildren = "combineChildren" // called after crossover and mutation
                                                     // to combine one or both children into individuals
   static String copyParentsToChildren = "copyParents" //used to copy parent individuals to children
@@ -68,13 +70,14 @@ class QueensPopulation extends DataClass{
       mutationProbability = (double)d[5]
       seeds = []
       if (d[6] != null)
-        d[6].each { seeds << (it as Long) }
+        d[6].each { seeds << (it + instance as Long) }
       else
         // seeds will be generated in the node
         for ( i in 0 ..< nodes) seeds << null
       fileName = d[7]
       replaceCount = d[8] as int
       fixedQueens = d[9] as int
+      points = d[10] as int
 
 
       assert populationPerNode >= 4: "Population: populationPerNode must be 4 or more not $populationPerNode"
@@ -226,11 +229,13 @@ class QueensPopulation extends DataClass{
 //    return result
 //  }
 
-  static def FindSubscriptsOfBinA(List a, List b){
+  static def FindSubscriptsOfBinA(List <Integer> a, List <Integer> b){
     // returns the subscripts in a where elements of b can be found
+//    print "\t\tFind $b in $a -> returns "
     List <Integer> subscripts = []
     for (  i in 0 ..< a.size())
       if ( b.contains(a[i])) subscripts << i
+//    print "$subscripts"
     return subscripts
   }
 
@@ -272,127 +277,240 @@ class QueensPopulation extends DataClass{
     individuals[child1].board = extractParts(0, numberOfQueens+1, individuals[parent1].board)
     individuals[child2].board = extractParts(0, numberOfQueens+1, individuals[parent2].board)
   }
-
-  def do2PointCrossover(List <Integer> p1a, List <Integer> p1b,
-                        List <Integer> p1c, List <Integer> p2b, int child){
-    List <Integer> commonB = p1b.intersect(p2b)
-    List <Integer> remainP1B = p1b.minus(commonB)
-    List <Integer> remainP2B = p2b.minus(commonB)
-    List <Integer> commonA = p1a.intersect(remainP2B)
-    List <Integer> subscripts = FindSubscriptsOfBinA(p1a, commonA)
-    subscripts.each {s -> p1a[s] = remainP1B.pop()}
-    subscripts = FindSubscriptsOfBinA(p1c, remainP2B)
-    subscripts.each {s -> p1c[s] = remainP1B.pop()}
-    individuals[child].board = [null] + p1a + p2b + p1c as List <Integer>
-  }
-
-  int queens2PointCrossover (int parent1,
-                             int parent2,
-                             int child1,
-                             int child2,
-                             Random rng){
-    // must ensure crossover points are not 0 as board[0] is not used
-    int c1 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
-    int c2 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
-    //ensure c1 and c2 are different
-    while ( c1 == c2) c2 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
-    if (c1 > c2) (c1,c2)=[c2,c1]  // ensure c1 < c2
-    // extract the parts of the parents; parts are labelled: a,b,c
-    int c2r = partCheck(c1, c2, parent2)
-    List <Integer> p1a = extractParts(1, c1, individuals[parent1].board)
-    List <Integer> p1b = extractParts(c1, c2r, individuals[parent1].board)
-    List <Integer> p2b = extractParts(c1, c2r, individuals[parent2].board)
-    List <Integer> p1c = extractParts(c2r, numberOfQueens+1, individuals[parent1].board)
-    do2PointCrossover(p1a, p1b, p1c, p2b, child1)
-    // now the other child
-    c2 = partCheck(c1, c2, parent1)
-    List <Integer> p2a = extractParts(1, c1, individuals[parent2].board)
-    p2b = extractParts(c1, c2, individuals[parent2].board)
-    p1b = extractParts(c1, c2, individuals[parent1].board)
-    List <Integer> p2c = extractParts(c2, numberOfQueens+1, individuals[parent2].board)
-    do2PointCrossover(p2a, p2b, p2c, p1b, child2)
-    return completedOK
-  }
-
-  def do4PointCrossover(List <Integer> p1a, List <Integer> p1b, List <Integer> p1c,
-                        List <Integer> p1d, List <Integer> p1e, List <Integer> p2b,
-                        List <Integer> p2d, int child)  {
-    List <Integer> commonB = p1b.intersect(p2b)
-    List <Integer> remainP1B = p1b.minus(commonB)
-    List <Integer> remainP2B = p2b.minus(commonB)
-
-    List <Integer> commonA = p1a.intersect(remainP2B)
-    List <Integer> subscripts = FindSubscriptsOfBinA(p1a, commonA)
-    subscripts.each {s -> p1a[s] = remainP1B.pop()}
-
-    List <Integer> commonC = p1c.intersect(remainP2B)
-    subscripts = FindSubscriptsOfBinA(p1c, commonC)
-    subscripts.each {s -> p1c[s] = remainP1B.pop()}
-
-    List <Integer> commonD = p1d.intersect(remainP2B)
-    subscripts = FindSubscriptsOfBinA(p1d, commonD)
-    subscripts.each {s -> p1d[s] = remainP1B.pop()}
-
-    List <Integer> commonE = p1e.intersect(remainP2B)
-    subscripts = FindSubscriptsOfBinA(p1e, commonE)
-    subscripts.each {s -> p1e[s] = remainP1B.pop()}
-
-    commonD = p1d.intersect(p2d)
-    List <Integer> remainP1D = p1d.minus(commonD)
-    List <Integer> remainP2D = p2d.minus(commonD)
-
-    commonA = p1a.intersect(remainP2D)
-    subscripts = FindSubscriptsOfBinA(p1a, commonA)
-    subscripts.each {s -> p1a[s] = remainP1D.pop()}
-
-    commonC = p1c.intersect(remainP2D)
-    subscripts = FindSubscriptsOfBinA(p1c, commonC)
-    subscripts.each {s -> p1c[s] = remainP1D.pop()}
-
-    commonE = p1e.intersect(remainP2D)
-    subscripts = FindSubscriptsOfBinA(p1e, commonE)
-    subscripts.each {s -> p1e[s] = remainP1D.pop()}
-
-    individuals[child].board = [null] + p1a + p2b + p1c + p2d + p1e
-  }
-
-  int queens4PointCrossover (int parent1,
-                             int parent2,
-                             int child1,
-                             int child2,
-                             Random rng) {
-    List randoms = []
-    List <Integer> p1a, p1b, p1c, p1d, p1e, p2b, p2d
-    for (n in 1 .. 4 ){
+// TODO
+  int multiPointCrossover (
+      int parent1,
+      int parent2,
+      int child1,
+      int child2,
+      Random rng ){
+    List <Integer> randoms = [1]  // first queen is in location 1 of board
+    for (n in 1 .. points ){
       int c = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
       while ( randoms.contains(c)) c = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
       randoms << c
     }
+    randoms << numberOfQueens + 1
     randoms = randoms.sort()
-    int n1 = randoms[0] as int
-    int n2 = randoms[1] as int
-    int n3 = randoms[2] as int
-    int n4 = randoms[3] as int
-    // randoms in sorted order now extract the five + 2 parts
-    p1a = extractParts(1, n1, individuals[parent1].board)
-    p1b = extractParts(n1, n2, individuals[parent1].board)
-    p1c = extractParts(n2, n3, individuals[parent1].board)
-    p1d = extractParts(n3, n4, individuals[parent1].board)
-    p1e = extractParts(n4, individuals[parent1].board.size(), individuals[parent1].board)
-    p2b = extractParts(n1, n2, individuals[parent2].board)
-    p2d = extractParts(n3, n4, individuals[parent2].board)
-    do4PointCrossover(p1a, p1b, p1c, p1d, p1e, p2b, p2d, child1)
-    // now the other way round for child2
-    p1a = extractParts(1, n1, individuals[parent2].board)
-    p1b = extractParts(n1, n2, individuals[parent2].board)
-    p1c = extractParts(n2, n3, individuals[parent2].board)
-    p1d = extractParts(n3, n4, individuals[parent2].board)
-    p1e = extractParts(n4, individuals[parent2].board.size(), individuals[parent2].board)
-    p2b = extractParts(n1, n2, individuals[parent1].board)
-    p2d = extractParts(n3, n4, individuals[parent1].board)
-    do4PointCrossover(p1a, p1b, p1c, p1d, p1e, p2b, p2d, child2)
+//    println "\n\n\nParent1 $parent1 = ${individuals[parent1].board}"
+//    println "Parent2 $parent2 = ${individuals[parent2].board}"
+//    println "Randoms = $randoms"
+    // randoms contains a sorted list of random points between the first movable queen and the
+    // end of the board
+    List <List <Integer>> partsOf1 = []   // all the parts of first parent
+    for ( i in 0 .. points){
+      partsOf1[i] = extractParts(randoms[i] as int, randoms[i+1] as int, individuals[parent1].board)
+    }
+    List <List <Integer>> partsOf2 = []   // odd parts of second parent
+    // crossover is between the odd subsections of partsOf1 and each subsection
+    // of partsOf2 in turn
+    int section = 1
+    while (section < points) {
+      partsOf2 << extractParts(randoms[section] , randoms[section+1], individuals[parent2].board)
+      section = section + 2
+    }
+    doMultiPointCrossover(partsOf1, partsOf2, child1)
+
+    // now do it the other way round between the parents and to a different child
+    partsOf1 = []
+    partsOf2 = []
+    for ( i in 0 .. points){
+      partsOf1[i] = extractParts(randoms[i] as int, randoms[i+1] as int, individuals[parent2].board)
+    }
+    section = 1
+    while (section < points) {
+      partsOf2 << extractParts(randoms[section] as int, randoms[section+1] as int, individuals[parent1].board)
+      section = section + 2   // we take the odd sections for processing
+    }
+    doMultiPointCrossover(partsOf1, partsOf2, child2)
     return completedOK
   }
+
+  def doMultiPointCrossover( List <List <Integer>>  partsOf1,
+                             List <List <Integer>>  partsOf2,
+                             int child ){
+    /*
+    the number of crossover Points is even
+    The number of subsections in partsOf1 is 2 * points + 1
+    there are points sections in partsOf2
+    p1Values holds the sum of the odd subsection of partsOf1
+    p2Values holds the sum of the even sections of partsOf2
+    The even numbered subsections of partsOf1 will be those
+    that are involved in the crossover operation
+     */
+    List <Integer> p1Values, p2Values, reallocate, common, searchSet, subscripts
+    p1Values = []
+    p2Values = []
+    int bitOf1, bitOf2
+    bitOf1 = 1
+    bitOf2 = 0
+//    println "\n\ndoMPC\n parts1= $partsOf1\nparts2 = $partsOf2\n"
+    while (bitOf1 < points) {
+      p1Values = p1Values + partsOf1[bitOf1]
+      bitOf1 = bitOf1 + 2
+    }
+    while ( bitOf2 < partsOf2.size()) {
+      p2Values = p2Values + partsOf2[bitOf2]
+      bitOf2++
+    }
+    /*
+    reallocate is the value that need to be reassigned in the result
+    common is those value common to both p1Values and p2Values
+    searchSet are those values that need to be replaced by
+    members of reallocate.
+    each even subsection of partsOf1 is searched to find the subscripts of any elements in both sets
+    any values found in the subsection of partsO1 can be replaced by taking a value from reallocate
+     */
+    reallocate = p1Values - p2Values
+    common = p1Values.intersect(p2Values)
+    searchSet = p2Values - common
+    assert reallocate.size() == searchSet.size(): "Set sizes in dMPC not equal"
+    bitOf1 = 0
+    while ( bitOf1 < partsOf1.size()) {
+      subscripts = FindSubscriptsOfBinA(partsOf1[bitOf1], searchSet)
+      subscripts.each{s -> partsOf1[bitOf1][s] = reallocate.pop()}
+      bitOf1 = bitOf1 + 2
+    }
+    /* now rebuild the replacement child by appending the now modified even subsections of partsOf1
+    and the unaltered subsections of partsOf2 in sequence.
+    The parts are appended to a null value as the zeroth element of a board is always null
+    The final updated version of the individual's board is obtained by flatten()ing
+     */
+    individuals[child].board = [null]
+    bitOf1 = 0
+    bitOf2 = 0
+    while ( bitOf1 < points) {
+      individuals[child].board << partsOf1[bitOf1]
+      individuals[child].board << partsOf2[bitOf2]
+      bitOf1 = bitOf1 + 2
+      bitOf2++
+    }
+    individuals[child].board << partsOf1[points]
+    individuals[child].board = individuals[child].board.flatten()
+//    println "\nChild $child = ${individuals[child].board}"
+  }
+
+//  def do2PointCrossover(List <Integer> p1a, List <Integer> p1b,
+//                        List <Integer> p1c, List <Integer> p2b, int child){
+//    List <Integer> commonB = p1b.intersect(p2b)
+//    List <Integer> remainP1B = p1b.minus(commonB)
+//    List <Integer> remainP2B = p2b.minus(commonB)
+//    List <Integer> commonA = p1a.intersect(remainP2B)
+//    List <Integer> subscripts = FindSubscriptsOfBinA(p1a, commonA)
+//    subscripts.each {s -> p1a[s] = remainP1B.pop()}
+//    subscripts = FindSubscriptsOfBinA(p1c, remainP2B)
+//    subscripts.each {s -> p1c[s] = remainP1B.pop()}
+//    individuals[child].board = [null] + p1a + p2b + p1c as List <Integer>
+//  }
+//
+//  int queens2PointCrossover (int parent1,
+//                             int parent2,
+//                             int child1,
+//                             int child2,
+//                             Random rng){
+//    // must ensure crossover points are not 0 as board[0] is not used
+//    int c1 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
+//    int c2 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
+//    //ensure c1 and c2 are different
+//    while ( c1 == c2) c2 = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
+//    if (c1 > c2) (c1,c2)=[c2,c1]  // ensure c1 < c2
+//    // extract the parts of the parents; parts are labelled: a,b,c
+////    int c2r = partCheck(c1, c2, parent2)
+//    int c2r = c2
+//    List <Integer> p1a = extractParts(1, c1, individuals[parent1].board)
+//    List <Integer> p1b = extractParts(c1, c2r, individuals[parent1].board)
+//    List <Integer> p2b = extractParts(c1, c2r, individuals[parent2].board)
+//    List <Integer> p1c = extractParts(c2r, numberOfQueens+1, individuals[parent1].board)
+//    do2PointCrossover(p1a, p1b, p1c, p2b, child1)
+//    // now the other child
+////    c2 = partCheck(c1, c2, parent1)
+//    List <Integer> p2a = extractParts(1, c1, individuals[parent2].board)
+//    p2b = extractParts(c1, c2, individuals[parent2].board)
+//    p1b = extractParts(c1, c2, individuals[parent1].board)
+//    List <Integer> p2c = extractParts(c2, numberOfQueens+1, individuals[parent2].board)
+//    do2PointCrossover(p2a, p2b, p2c, p1b, child2)
+//    return completedOK
+//  }
+//
+//  def do4PointCrossover(List <Integer> p1a, List <Integer> p1b, List <Integer> p1c,
+//                        List <Integer> p1d, List <Integer> p1e, List <Integer> p2b,
+//                        List <Integer> p2d, int child)  {
+//    List <Integer> commonB = p1b.intersect(p2b)
+//    List <Integer> remainP1B = p1b.minus(commonB)
+//    List <Integer> remainP2B = p2b.minus(commonB)
+//
+//    List <Integer> commonA = p1a.intersect(remainP2B)
+//    List <Integer> subscripts = FindSubscriptsOfBinA(p1a, commonA)
+//    subscripts.each {s -> p1a[s] = remainP1B.pop()}
+//
+//    List <Integer> commonC = p1c.intersect(remainP2B)
+//    subscripts = FindSubscriptsOfBinA(p1c, commonC)
+//    subscripts.each {s -> p1c[s] = remainP1B.pop()}
+//
+//    List <Integer> commonD = p1d.intersect(remainP2B)
+//    subscripts = FindSubscriptsOfBinA(p1d, commonD)
+//    subscripts.each {s -> p1d[s] = remainP1B.pop()}
+//
+//    List <Integer> commonE = p1e.intersect(remainP2B)
+//    subscripts = FindSubscriptsOfBinA(p1e, commonE)
+//    subscripts.each {s -> p1e[s] = remainP1B.pop()}
+//
+//    commonD = p1d.intersect(p2d)
+//    List <Integer> remainP1D = p1d.minus(commonD)
+//    List <Integer> remainP2D = p2d.minus(commonD)
+//
+//    commonA = p1a.intersect(remainP2D)
+//    subscripts = FindSubscriptsOfBinA(p1a, commonA)
+//    subscripts.each {s -> p1a[s] = remainP1D.pop()}
+//
+//    commonC = p1c.intersect(remainP2D)
+//    subscripts = FindSubscriptsOfBinA(p1c, commonC)
+//    subscripts.each {s -> p1c[s] = remainP1D.pop()}
+//
+//    commonE = p1e.intersect(remainP2D)
+//    subscripts = FindSubscriptsOfBinA(p1e, commonE)
+//    subscripts.each {s -> p1e[s] = remainP1D.pop()}
+//
+//    individuals[child].board = [null] + p1a + p2b + p1c + p2d + p1e
+//  }
+//
+//  int queens4PointCrossover (int parent1,
+//                             int parent2,
+//                             int child1,
+//                             int child2,
+//                             Random rng) {
+//    List randoms = []
+//    List <Integer> p1a, p1b, p1c, p1d, p1e, p2b, p2d
+//    for (n in 1 .. 4 ){
+//      int c = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
+//      while ( randoms.contains(c)) c = rng.nextInt(numberOfQueens - fixedQueens) + firstMovableQueen
+//      randoms << c
+//    }
+//    randoms = randoms.sort()
+//    int n1 = randoms[0] as int
+//    int n2 = randoms[1] as int
+//    int n3 = randoms[2] as int
+//    int n4 = randoms[3] as int
+//    // randoms in sorted order now extract the five + 2 parts
+//    p1a = extractParts(1, n1, individuals[parent1].board)
+//    p1b = extractParts(n1, n2, individuals[parent1].board)
+//    p1c = extractParts(n2, n3, individuals[parent1].board)
+//    p1d = extractParts(n3, n4, individuals[parent1].board)
+//    p1e = extractParts(n4, individuals[parent1].board.size(), individuals[parent1].board)
+//    p2b = extractParts(n1, n2, individuals[parent2].board)
+//    p2d = extractParts(n3, n4, individuals[parent2].board)
+//    do4PointCrossover(p1a, p1b, p1c, p1d, p1e, p2b, p2d, child1)
+//    // now the other way round for child2
+//    p1a = extractParts(1, n1, individuals[parent2].board)
+//    p1b = extractParts(n1, n2, individuals[parent2].board)
+//    p1c = extractParts(n2, n3, individuals[parent2].board)
+//    p1d = extractParts(n3, n4, individuals[parent2].board)
+//    p1e = extractParts(n4, individuals[parent2].board.size(), individuals[parent2].board)
+//    p2b = extractParts(n1, n2, individuals[parent1].board)
+//    p2d = extractParts(n3, n4, individuals[parent1].board)
+//    do4PointCrossover(p1a, p1b, p1c, p1d, p1e, p2b, p2d, child2)
+//    return completedOK
+//  }
 
 //  int combineChildren(int parent1,
 //                      int parent2,

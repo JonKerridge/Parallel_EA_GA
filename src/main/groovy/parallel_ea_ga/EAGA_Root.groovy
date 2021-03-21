@@ -1,11 +1,11 @@
 package parallel_ea_ga
 
-import groovyJCSP.ChannelOutputList
-import groovyParallelPatterns.DataClassInterface
-import groovyParallelPatterns.UniversalRequest
-import groovyParallelPatterns.UniversalResponse
-import groovyParallelPatterns.UniversalSignal
-import groovyParallelPatterns.UniversalTerminator
+import groovy_jcsp.ChannelOutputList
+import groovy_parallel_patterns.DataClassInterface
+import groovy_parallel_patterns.UniversalRequest
+import groovy_parallel_patterns.UniversalResponse
+import groovy_parallel_patterns.UniversalSignal
+import groovy_parallel_patterns.UniversalTerminator
 import jcsp.lang.CSProcess
 import jcsp.lang.ChannelInput
 import jcsp.lang.ChannelOutput

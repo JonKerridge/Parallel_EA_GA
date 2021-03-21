@@ -3,34 +3,49 @@ plugins {
     id 'java'
 }
 
-group 'ea-ga'
+group 'jonkerridge'
 version '1.0.0'
-
-//def jcspLib = "C:/jcspLib"
-//def gppLibraryJarFile = "groovyParallelPatterns-1.0.6.jar"
-//def gppBuilderJarFile = "GPP_Builder-1.0.6.jar"
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven {
-        url "https://dl.bintray.com/jonkerridge/jcsp"
+    maven { // to download the jonkerridge.groovy_jcsp library
+        name = "GitHub"
+        url = "https://maven.pkg.github.com/JonKerridge/groovyJCSP"
+        credentials {
+            username = project.findProperty("gpr.user")
+            password = project.findProperty("gpr.key")
+        }
     }
-    maven {
-        url "https://dl.bintray.com/jonkerridge/gpp"
+    maven { // to download the cspforjava.jcsp library
+        name = "GitHub"
+        url = "https://maven.pkg.github.com/CSPforJAVA/jcsp"
+        credentials {
+            username = project.findProperty("gpr.user")
+            password = project.findProperty("gpr.key")
+        }
     }
-    maven {
-        url "https://mvnrepository.com/artifact/org.codehaus.groovy/groovy-all"
+    maven { // to download the jonkerridge.groovy_parallel_patterns library
+        name = "GitHub"
+        url = "https://maven.pkg.github.com/JonKerridge/GPP_Library"
+        credentials {
+            username = project.findProperty("gpr.user")
+            password = project.findProperty("gpr.key")
+        }
+    }
+    maven { // to download the jonkerridge.gpp_builder library
+        name = "GitHub"
+        url = "https://maven.pkg.github.com/JonKerridge/GPP_Builder"
+        credentials {
+            username = project.findProperty("gpr.user")
+            password = project.findProperty("gpr.key")
+        }
     }
 }
 
 dependencies {
-    compile 'org.codehaus.groovy:groovy-all:3.0.3'
-    compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
-    compile 'cspforjava:jcsp:1.1.0'
-    compile 'groovyJCSP:groovyJCSP:1.1.3'
-    compile 'groovyParallelPatterns:groovyParallelPatterns:1.0.6'
-    compile 'gppBuilder:gppBuilder:1.0.6'
-//    compile fileTree(dir: "$jcspLib", include: ["$gppLibraryJarFile"])
-//    compile fileTree(dir: "$jcspLib", include: ["$gppBuilderJarFile"])
+    implementation 'org.codehaus.groovy:groovy-all:3.0.7'
+    implementation 'cspforjava:jcsp:1.1.9'
+    implementation 'jonkerridge:groovy_jcsp:1.1.9'
+    implementation "jonkerridge:groovy_parallel_patterns:1.1.12"
+    implementation "jonkerridge:gpp_builder:1.1.12"
 }

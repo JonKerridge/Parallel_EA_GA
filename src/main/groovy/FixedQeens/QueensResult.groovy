@@ -1,6 +1,6 @@
 package FixedQeens
 
-import groovyParallelPatterns.DataClass
+import groovy_parallel_patterns.DataClass
 
 class QueensResult extends DataClass{
 
@@ -33,7 +33,7 @@ class QueensResult extends DataClass{
         "Board ${data.individuals[data.first].board} " +
         "Seeds $seedString\n"
     outWriter.println("$resultNumber, ${data.solutionFound}, ${data.timeTaken}, ${data.generations}, " +
-    "${data.individuals[data.first].getFitness()}, , ${data.individuals[data.first].board}, , $seedString")
+    "${data.individuals[data.first].getFitness()}, , $seedString, , ${data.individuals[data.first].board}")
     resultNumber += 1
     return completedOK
   }

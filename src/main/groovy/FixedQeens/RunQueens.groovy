@@ -1,48 +1,37 @@
 package FixedQeens
 
-import groovyJCSP.PAR
-import groovyParallelPatterns.DataDetails
-import groovyParallelPatterns.ResultDetails
-import groovyParallelPatterns.terminals.Collect
-import groovyParallelPatterns.terminals.Emit
+import groovy_jcsp.PAR
+import groovy_parallel_patterns.DataDetails
+import groovy_parallel_patterns.ResultDetails
+import groovy_parallel_patterns.terminals.Collect
+import groovy_parallel_patterns.terminals.Emit
 import jcsp.lang.Channel
 import parallel_ea_ga.EAGA_Engine
-int queens = 256
-int fixedQueens = 0
 
+int queens = 32
+int fixedQueens = 6
 int nodes = 16
 int populationPerNode = 4
-
-double crossoverProbability = 0.5
+int crossoverPoints = 2
+double crossoverProbability = 0.75
 double mutateProbability = 0.8
-int replaceCount = 1000
-
-List <Long> seeds = []
-
-if (args.size() != 0){
-  queens = Integer.parseInt(args[0])
-  fixedQueens = Integer.parseInt(args[1])
-  nodes = Integer.parseInt(args[2])
-  populationPerNode = Integer.parseInt(args[3])
-  crossoverProbability = Double.parseDouble(args[4])
-  mutateProbability = Double.parseDouble(args[5])
-  mutateRepeats = Integer.parseInt(args[6])
-  replaceCount = Integer.parseInt(args[7])
-}
-
+int replaceCount = 500
 int instances = 10
-int maxGenerations = 100000
+int maxGenerations = 25000
+List <Long> seeds = [11L,23L,31L,43L,53L,61L,71L,83L,97L,101L,113L,127L,131L,149L,151L,163L]
+
 
 String userDir
 userDir = "D:\\IJGradle\\EA_GA\\src\\main\\groovy\\FixedQeens"
 boolean maximise = false
 String fileName = "$userDir" + "/Fixed$fixedQueens-1.txt"
-String outBase = "$userDir" + "/csvFixed${queens}F${fixedQueens}/"
+String outBase = "$userDir" + "/csvFixed${queens}F${fixedQueens}V1/"
 def dir = new File(outBase)
 dir.mkdirs()
 String outName = outBase +
                 "Q${queens}F${fixedQueens}N${nodes}P${populationPerNode}" +
-                "XP${crossoverProbability}MP${mutateProbability}RC${replaceCount}X2.csv"
+                "XP${crossoverProbability}MP${mutateProbability}G${maxGenerations}" +
+                "XOP${crossoverPoints}.csv"
 println "In File = $fileName\nOut File = $outName"
 
 def outFile = new File(outName)
@@ -50,14 +39,14 @@ if (outFile.exists())outFile.delete()
 def outWriter = outFile.newPrintWriter()
 
 def eDetails = new DataDetails(
-    dName: FixedQeens.QueensPopulation.getName(),
-    dInitMethod: FixedQeens.QueensPopulation.initialiseMethod,
+    dName: QueensPopulation.getName(),
+    dInitMethod: QueensPopulation.initialiseMethod,
     dInitData: [instances],
-    dCreateMethod: FixedQeens.QueensPopulation.createInstance,
+    dCreateMethod: QueensPopulation.createInstance,
     dCreateData: [queens, populationPerNode,
                   nodes, maximise, crossoverProbability,
-                  mutateProbability, null, fileName,
-                  replaceCount, fixedQueens ]
+                  mutateProbability, seeds, fileName,
+                  replaceCount, fixedQueens, crossoverPoints ]
 )
 def rDetails = new ResultDetails (
     rName: QueensResult.getName(),
@@ -98,13 +87,13 @@ println "Queens Nodes $nodes " +
     "Mutate $mutateProbability " +
     "Instances $instances " +
     "MaxGeneration $maxGenerations " +
-    "Method ${FixedQeens.QueensPopulation.crossover} " +
+    "Method $crossoverPoints " +
     "Replace $replaceCount " +
     "Time ${endTime-startTime}"
 
 outWriter.println("$nodes, $populationPerNode, $queens, $fixedQueens, $crossoverProbability, "
 + "$mutateProbability, $maxGenerations, "
-    + "${FixedQeens.QueensPopulation.crossover}, $replaceCount, ${endTime-startTime}")
+    + "$crossoverPoints, $replaceCount, ${endTime-startTime}")
 
 outWriter.flush()
 outWriter.close()
